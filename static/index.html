@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Matcha Club</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="styles.css?v=20260720b">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <!-- Заголовок Glassmorphism -->
+        <header id="header" class="glass-panel">
+            <img src="img/logo_blue.png" alt="Matcha Club" class="header-logo logo-light">
+            <img src="img/logo_white.png" alt="Matcha Club" class="header-logo logo-dark hidden">
+            <div id="user-points" class="hidden">
+                <span class="points-icon">🍃</span> 
+                <span id="points-val">0</span>
+            </div>
+        </header>
+
+        <!-- Контент страниц -->
+        <main id="main-content">
+            <div class="loader">
+                <div class="spinner"></div>
+                <p>Завариваем матчу...</p>
+            </div>
+        </main>
+
+        <!-- Нижняя навигация Glassmorphism -->
+        <nav id="bottom-nav" class="glass-panel">
+            <button class="nav-item active" data-target="home">
+                <span class="icon">✨</span>
+                <span class="label">Главная</span>
+            </button>
+            <button class="nav-item" data-target="welcome">
+                <span class="icon">📖</span>
+                <span class="label">О нас</span>
+            </button>
+            <button class="nav-item" data-target="menu">
+                <span class="icon">🌿</span>
+                <span class="label">Меню</span>
+            </button>
+            <button class="nav-item" data-target="quiz">
+                <span class="icon">🎯</span>
+                <span class="label">Квиз</span>
+            </button>
+            <button class="nav-item" data-target="profile">
+                <span class="icon">👤</span>
+                <span class="label">Профиль</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Шаблоны страниц -->
+    <template id="tpl-home">
+        <div class="page home-page animate-fade-in">
+            <div class="hero-section">
+                <img src="img/logo_blue.png" alt="Matcha Club & Mari Wellness" class="hero-logo logo-light">
+                <img src="img/logo_white.png" alt="Matcha Club & Mari Wellness" class="hero-logo logo-dark hidden">
+                <p class="hero-text">Пространство здорового образа жизни, гастрономии и атмосферы.</p>
+            </div>
+
+            <div class="quick-actions">
+                <div class="action-card premium-card" onclick="app.navigate('menu')">
+                    <div class="action-content">
+                        <h3>Изучить меню</h3>
+                        <p>Блюда с подсчетом КБЖУ</p>
+                    </div>
+                    <div class="action-icon">🍵</div>
+                </div>
+                <div class="action-card premium-card" onclick="app.navigate('welcome')">
+                    <div class="action-content">
+                        <h3>Велком-бук</h3>
+                        <p>О компании и ценностях</p>
+                    </div>
+                    <div class="action-icon">📖</div>
+                </div>
+                <div class="action-card premium-card" onclick="app.showFact()">
+                    <div class="action-content">
+                        <h3>Факт дня</h3>
+                        <p>Интересно о питании</p>
+                    </div>
+                    <div class="action-icon">💡</div>
+                </div>
+                <div class="action-card premium-card" onclick="app.showAttendanceMenu()" style="background: linear-gradient(135deg, rgba(74, 222, 128, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%); border-color: rgba(74, 222, 128, 0.3);">
+                    <div class="action-content">
+                        <h3>Смена</h3>
+                        <p>Отметка прихода / ухода</p>
+                    </div>
+                    <div class="action-icon">⏱</div>
+                </div>
+                <div class="action-card premium-card tour-card" onclick="app.navigate('tour')">
+                    <div class="action-content">
+                        <h3>Экскурсия</h3>
+                        <p>Видео для новых сотрудников</p>
+                    </div>
+                    <div class="action-icon">🎬</div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- ── Велком-бук ── -->
+    <template id="tpl-welcome">
+        <div class="page welcome-page animate-fade-in">
+            <div class="welcome-hero premium-card">
+                <div class="welcome-hero-icon">📖</div>
+                <h2>Велком-бук</h2>
+                <p id="welcome-company-msg">Загрузка...</p>
+            </div>
+            <div id="welcome-sections" class="welcome-sections"></div>
+        </div>
+    </template>
+
+    <!-- ── Раздел велком-бука ── -->
+    <template id="tpl-welcome-section">
+        <div class="page welcome-section-page animate-fade-in">
+            <button class="back-btn" id="welcome-back-btn">
+                <span class="back-icon">←</span> Назад
+            </button>
+            <div class="section-content premium-card">
+                <h2 id="section-title">Заголовок</h2>
+                <div id="section-body" class="section-body"></div>
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-menu">
+        <div class="page menu-page animate-fade-in">
+            <div class="menu-tabs glass-panel">
+                <button class="tab-btn active" data-type="kitchen">🍽️ Кухня</button>
+                <button class="tab-btn" data-type="bar">🍹 Бар</button>
+            </div>
+            <div id="categories-container" class="categories-grid"></div>
+            <div id="items-container" class="items-list hidden">
+                <button class="back-btn" onclick="app.renderMenuCategories()">
+                    <span class="back-icon">←</span> Назад
+                </button>
+                <div id="items-grid" class="grid-2col"></div>
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-profile">
+        <div class="page profile-page animate-fade-in">
+            <div class="profile-header premium-card">
+                <div class="avatar" id="prof-avatar">👤</div>
+                <h2 id="prof-name">Загрузка...</h2>
+                <div class="rank-badge" id="prof-rank">Стажёр</div>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-box premium-card">
+                    <span class="stat-icon">🍃</span>
+                    <span class="stat-val" id="prof-points">0</span>
+                    <span class="stat-label">Баллы</span>
+                </div>
+                <div class="stat-box premium-card">
+                    <span class="stat-icon">🎯</span>
+                    <span class="stat-val" id="prof-quizzes">0</span>
+                    <span class="stat-label">Квизы</span>
+                </div>
+                <div class="stat-box premium-card">
+                    <span class="stat-icon">🎁</span>
+                    <span class="stat-val" id="prof-rewards">0</span>
+                    <span class="stat-label">Награды</span>
+                </div>
+            </div>
+
+            <div class="reward-section premium-card">
+                <div class="reward-header">
+                    <h3>Напитки</h3>
+                    <span class="drinks-count">Доступно: <strong id="prof-drinks">0</strong></span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="prof-progress"></div>
+                </div>
+                <p class="progress-text" id="prof-progress-text">0 / 20 до напитка</p>
+                <button id="btn-claim-reward" class="btn-primary" disabled>Обменять на напиток</button>
+            </div>
+            
+            <div class="leaderboard-section">
+                <h3 class="section-title">Топ 10 сотрудников</h3>
+                <div id="leaderboard-list" class="premium-card list-card"></div>
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-quiz">
+        <div class="page quiz-page animate-fade-in">
+            <div id="quiz-intro" class="premium-card text-center">
+                <div class="quiz-hero-icon">🎯</div>
+                <h2>Квиз Matcha Club</h2>
+                <p class="quiz-subtitle">Проверь знания и заработай на напиток!</p>
+                <div class="quiz-bank-progress" id="quiz-bank-info">
+                    <div class="bank-progress-bar">
+                        <div class="bank-progress-fill" id="bank-fill"></div>
+                    </div>
+                    <p class="bank-progress-text" id="bank-text">Загрузка...</p>
+                </div>
+                <div class="quiz-rules text-left">
+                    <div class="rule-item"><span class="rule-icon success">✅</span> +1 балл за верный ответ</div>
+                    <div class="rule-item"><span class="rule-icon danger">❌</span> -2 балла за ошибку</div>
+                    <div class="rule-item"><span class="rule-icon primary">🍹</span> 20 баллов = 1 напиток</div>
+                    <div class="rule-item"><span class="rule-icon primary">🔄</span> Вопросы не повторяются</div>
+                </div>
+                <button id="btn-start-quiz" class="btn-primary">Начать квиз</button>
+            </div>
+            
+            <div id="quiz-process" class="hidden">
+                <div class="quiz-header">
+                    <div class="quiz-progress-pill" id="quiz-progress">1/10</div>
+                    <div class="quiz-score-pill" id="quiz-score">Баллы: 0</div>
+                </div>
+                <h3 id="quiz-question" class="question-text">Вопрос...</h3>
+                <div id="quiz-options" class="options-list"></div>
+            </div>
+            
+            <div id="quiz-result" class="hidden premium-card text-center">
+                <div class="quiz-hero-icon">🎉</div>
+                <h2>Квиз завершен!</h2>
+                <div class="result-stats">
+                    <div class="res-stat">✅ <strong id="quiz-res-correct">0</strong> верных</div>
+                    <div class="res-stat">❌ <strong id="quiz-res-wrong">0</strong> ошибок</div>
+                </div>
+                <div class="final-score-box">
+                    <p>Заработано баллов</p>
+                    <h3 class="final-score" id="quiz-res-points">0</h3>
+                </div>
+                <p class="bank-progress-text" id="result-bank-text" style="margin-bottom:12px;"></p>
+                <div style="display:flex; gap:10px; flex-direction:column;">
+                    <button class="btn-primary" id="btn-play-again">🔄 Ещё раунд</button>
+                    <button class="btn-secondary" onclick="app.navigate('profile')">В профиль</button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- ── Экскурсия ── -->
+    <template id="tpl-tour">
+        <div class="page tour-page animate-fade-in">
+            <div class="tour-hero">
+                <div class="tour-hero-icon">🎬</div>
+                <h2>Экскурсия по Matcha Club</h2>
+                <p class="tour-subtitle">Добро пожаловать в команду! Посмотрите видео — познакомьтесь с нашим заведением, командой и атмосферой.</p>
+            </div>
+
+            <div id="tour-videos" class="tour-videos">
+                <!-- Видео будут загружены динамически -->
+            </div>
+
+            <div class="tour-tip premium-card">
+                <div class="tour-tip-icon">💡</div>
+                <div>
+                    <b>Совет:</b> Смотрите видео в наушниках для лучшего погружения в атмосферу заведения.
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script src="app.v2.js?v=20260721a"></script>
+</body>
+</html>

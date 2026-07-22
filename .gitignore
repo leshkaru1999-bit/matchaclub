@@ -1,0 +1,12 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+*.db
+venv/
+.venv/
+data/
+*.log
+out*.txt
+excel_out*.txt
+missing.txt
