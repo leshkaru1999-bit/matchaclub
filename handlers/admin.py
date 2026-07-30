@@ -1,4 +1,5 @@
 """Обработчик админ-панели с управлением меню."""
+import subprocess
 import json
 import os
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -80,6 +81,9 @@ def get_admin_keyboard():
         ],
         [
             InlineKeyboardButton("🎬 Экскурсия", callback_data="adm_tour_mgmt"),
+        ],
+        [
+            InlineKeyboardButton("🔄 Обновить с сервера", callback_data="adm_gitpull"),
         ],
     ])
 
@@ -457,12 +461,14 @@ async def admin_delete_item_ok_callback(update: Update, context: ContextTypes.DE
 
 
 async def admin_edit_item_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Редактирование блюда — показываем текущее и просим ввести новое."""
+    """Редактирование блюда — выбор поля."""
     query = update.callback_query
     if not is_admin(query.from_user):
         await query.answer("Нет доступа!")
         return
     await query.answer()
+
+    context.user_data.pop('awaiting_edit', None)
 
     parts = query.data.replace("adm_edit_", "").rsplit("_", 1)
     cat_id = parts[0]
@@ -475,19 +481,68 @@ async def admin_edit_item_callback(update: Update, context: ContextTypes.DEFAULT
         return
 
     item = category['items'][item_idx]
-    context.user_data['edit_cat_id'] = cat_id
-    context.user_data['edit_item_idx'] = item_idx
-    context.user_data['awaiting_edit'] = True
 
     text = (
         f"✏️ <b>Редактирование блюда</b>\n\n"
-        f"<b>Название:</b> {item['name']}\n"
-        f"<b>Описание:</b> {item.get('description', '—')}\n\n"
-        f"Отправь новое название блюда (только текст).\n"
-        f"Или /cancel для отмены."
+        f"<b>Название:</b> {item.get('name', '—')}\n"
+        f"<b>Описание:</b> {item.get('description', '—')}\n"
+        f"<b>Состав:</b> {item.get('ingredients', '—')}\n"
+        f"<b>Объём:</b> {item.get('volume', '—')}\n"
+        f"<b>КБЖУ:</b> {item.get('calories', 0)}/{item.get('protein', 0)}/{item.get('fat', 0)}/{item.get('carbs', 0)}\n\n"
+        f"Выбери, что хочешь изменить:"
     )
-    await query.message.edit_text(text, parse_mode='HTML')
 
+    buttons = [
+        [
+            InlineKeyboardButton("✏️ Название", callback_data=f"adm_edf_name_{cat_id}_{item_idx}"),
+            InlineKeyboardButton("📝 Описание", callback_data=f"adm_edf_desc_{cat_id}_{item_idx}")
+        ],
+        [
+            InlineKeyboardButton("🥗 Состав", callback_data=f"adm_edf_ingr_{cat_id}_{item_idx}"),
+            InlineKeyboardButton("📸 Фото", callback_data=f"adm_edf_photo_{cat_id}_{item_idx}")
+        ],
+        [
+            InlineKeyboardButton("📊 КБЖУ", callback_data=f"adm_edf_macros_{cat_id}_{item_idx}"),
+            InlineKeyboardButton("🥤 Объём", callback_data=f"adm_edf_volume_{cat_id}_{item_idx}")
+        ],
+        [InlineKeyboardButton("🔙 Назад", callback_data=f"adm_mitem_{cat_id}")]
+    ]
+    await query.message.edit_text(text, parse_mode='HTML', reply_markup=InlineKeyboardMarkup(buttons))
+
+
+async def admin_edit_field_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer()
+
+    parts = query.data.replace("adm_edf_", "").rsplit("_", 2)
+    field = parts[0]
+    cat_id = parts[1]
+    item_idx = int(parts[2])
+
+    context.user_data['awaiting_edit'] = True
+    context.user_data['edit_cat_id'] = cat_id
+    context.user_data['edit_item_idx'] = item_idx
+    context.user_data['edit_field'] = field
+
+    if field == 'name':
+        prompt = "Отправь новое <b>Название</b> блюда (только текст).\nИли /cancel для отмены."
+    elif field == 'desc':
+        prompt = "Отправь новое <b>Описание</b> блюда (только текст).\nИли /cancel для отмены."
+    elif field == 'ingr':
+        prompt = "Отправь новый <b>Состав</b> блюда (только текст).\nИли /cancel для отмены."
+    elif field == 'photo':
+        prompt = "Отправь новую <b>Фотографию</b> блюда (изображением).\nИли /cancel для отмены."
+    elif field == 'macros':
+        prompt = "Отправь новые <b>КБЖУ</b> (через пробел или запятую: Калории Белки Жиры Углеводы).\nНапример: <code>250 15 10 30</code>\nИли /cancel для отмены."
+    elif field == 'volume':
+        prompt = "Отправь новый <b>Объём</b> порции (например: <code>250 мл</code>, <code>30 мл</code>, <code>500 г</code>).\nИли /cancel для отмены."
+
+    await query.message.edit_text(prompt, parse_mode='HTML', reply_markup=InlineKeyboardMarkup([
+        [InlineKeyboardButton("🔙 Отмена", callback_data=f"adm_edit_{cat_id}_{item_idx}")]
+    ]))
 
 async def admin_add_item_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Добавление нового блюда — запрашиваем название."""
@@ -509,7 +564,8 @@ async def admin_add_item_callback(update: Update, context: ContextTypes.DEFAULT_
         'step': 'NAME',
         'name': '',
         'description': '',
-        'ingredients': ''
+        'ingredients': '',
+        'volume': ''
     }
 
     await query.message.edit_text(
@@ -578,21 +634,74 @@ async def handle_admin_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data['awaiting_edit'] = False
         cat_id = context.user_data.pop('edit_cat_id', None)
         item_idx = context.user_data.pop('edit_item_idx', None)
-        if cat_id is None or item_idx is None:
+        field = context.user_data.pop('edit_field', None)
+        
+        if text == '/cancel':
+            await update.message.reply_text("❌ Редактирование отменено.")
+            return
+
+        if cat_id is None or item_idx is None or field is None:
             await update.message.reply_text("❌ Ошибка: контекст редактирования утерян.")
             return
+            
         data = load_menu()
         category = next((c for c in data['categories'] if c['id'] == cat_id), None)
         if not category or item_idx >= len(category['items']):
             await update.message.reply_text("❌ Блюдо не найдено.")
             return
-        old_name = category['items'][item_idx]['name']
-        category['items'][item_idx]['name'] = text
+            
+        item = category['items'][item_idx]
+        
+        if field == 'name':
+            if not text:
+                await update.message.reply_text("❌ Нужно отправить текст.")
+                return
+            item['name'] = text
+        elif field == 'desc':
+            if not text:
+                await update.message.reply_text("❌ Нужно отправить текст.")
+                return
+            item['description'] = text
+        elif field == 'ingr':
+            if not text:
+                await update.message.reply_text("❌ Нужно отправить текст.")
+                return
+            item['ingredients'] = text
+        elif field == 'photo':
+            if not photo:
+                await update.message.reply_text("❌ Нужно отправить фото.")
+                return
+            import uuid
+            from config import PHOTOS_DIR
+            os.makedirs(PHOTOS_DIR, exist_ok=True)
+            filename = f"item_{uuid.uuid4().hex[:8]}.jpg"
+            photo_path = os.path.join(PHOTOS_DIR, filename)
+            new_file = await photo.get_file()
+            await new_file.download_to_drive(custom_path=photo_path)
+            item['photo'] = filename
+        elif field == 'macros':
+            import re
+            nums = re.findall(r'\d+', text) if text else []
+            if len(nums) >= 4:
+                item['calories'] = int(nums[0])
+                item['protein'] = int(nums[1])
+                item['fat'] = int(nums[2])
+                item['carbs'] = int(nums[3])
+            else:
+                await update.message.reply_text("❌ Нужно отправить 4 числа.")
+                return
+        elif field == 'volume':
+            if not text:
+                await update.message.reply_text("❌ Нужно отправить текст (например: 250 мл).")
+                return
+            item['volume'] = text
+                
         save_menu(data)
         await update.message.reply_text(
-            f"✅ Название изменено:\n<b>«{old_name}»</b> → <b>«{text}»</b>",
+            f"✅ Поле обновлено!",
             parse_mode='HTML',
             reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 Вернуться к блюду", callback_data=f"adm_edit_{cat_id}_{item_idx}")],
                 [InlineKeyboardButton("🔙 К категории", callback_data=f"adm_mitem_{cat_id}")],
             ])
         )
@@ -701,6 +810,23 @@ async def handle_admin_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     await update.message.reply_text("❌ Пожалуйста, введите 4 числа (К Б Ж У) или отправьте \"-\".")
                     return
 
+            add_state['calories'] = calories
+            add_state['protein'] = protein
+            add_state['fat'] = fat
+            add_state['carbs'] = carbs
+            add_state['step'] = 'VOLUME'
+            await update.message.reply_text(
+                "✅ КБЖУ сохранено.\n\n"
+                "Отправь <b>Объём</b> порции (например: <code>250 мл</code>, <code>30 мл</code>, <code>500 г</code>).\n"
+                "<i>(Или отправь \"-\", чтобы пропустить)</i>",
+                parse_mode='HTML'
+            )
+            return
+
+        elif step == 'VOLUME':
+            volume = "" if (not text or text == "-") else text
+            add_state['volume'] = volume
+
             context.user_data.pop('awaiting_add', None)
             
             data = load_menu()
@@ -714,17 +840,20 @@ async def handle_admin_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "description": add_state['description'],
                 "ingredients": add_state['ingredients'],
                 "photo": add_state.get('photo', ""),
-                "calories": calories,
-                "protein": protein,
-                "fat": fat,
-                "carbs": carbs
+                "calories": add_state.get('calories', 0),
+                "protein": add_state.get('protein', 0),
+                "fat": add_state.get('fat', 0),
+                "carbs": add_state.get('carbs', 0)
             }
+            if add_state.get('volume'):
+                new_item['volume'] = add_state['volume']
             category['items'].append(new_item)
             save_menu(data)
             
             photo_msg = "с фотографией" if add_state.get('photo') else "без фотографии"
+            volume_msg = f", объём: {add_state['volume']}" if add_state.get('volume') else ""
             await update.message.reply_text(
-                f"✅ Блюдо <b>«{add_state['name']}»</b> успешно добавлено ({photo_msg}, КБЖУ сохранено) в категорию <b>«{category['name']}»</b>.",
+                f"✅ Блюдо <b>«{add_state['name']}»</b> успешно добавлено ({photo_msg}{volume_msg}) в категорию <b>«{category['name']}»</b>.",
                 parse_mode='HTML',
                 reply_markup=InlineKeyboardMarkup([
                     [InlineKeyboardButton("🔙 К категории", callback_data=f"adm_mitem_{cat_id}")],
@@ -741,6 +870,94 @@ async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.pop('awaiting_add_admin', None)
     context.user_data.pop('awaiting_tour', None)
     await update.message.reply_text("❌ Действие отменено.")
+
+
+# ─── Обновление с сервера (git pull) ──────────────────────────────
+
+async def admin_gitpull_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Делает git pull и перезагружает кеш меню."""
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer()
+
+    await query.message.edit_text(
+        "🔄 <b>Обновление с сервера...</b>\n\nВыполняю <code>git pull</code>, подожди...",
+        parse_mode='HTML'
+    )
+
+    try:
+        import os
+        repo_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        result = subprocess.run(
+            ['git', 'pull'],
+            cwd=repo_dir,
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        stdout = result.stdout.strip()
+        stderr = result.stderr.strip()
+        output = stdout or stderr or '(нет вывода)'
+
+        # Ограничиваем длину
+        if len(output) > 800:
+            output = output[:800] + '...'
+
+        # Перезагружаем кеш меню
+        menu_reloaded = False
+        try:
+            from handlers import menu as menu_handler
+            menu_handler.reload_menu()
+            menu_reloaded = True
+        except Exception as e:
+            pass
+
+        if result.returncode == 0:
+            status_icon = '✅'
+            status_text = 'Успешно обновлено!'
+        else:
+            status_icon = '⚠️'
+            status_text = f'Git вернул код {result.returncode}'
+
+        menu_status = '✅ Кеш меню перезагружен' if menu_reloaded else '⚠️ Кеш меню не перезагружен'
+
+        await query.message.edit_text(
+            f"{status_icon} <b>git pull завершён</b>\n"
+            f"{status_text}\n\n"
+            f"<code>{output}</code>\n\n"
+            f"{menu_status}",
+            parse_mode='HTML',
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 Админ-панель", callback_data="adm_menu")]
+            ])
+        )
+
+    except subprocess.TimeoutExpired:
+        await query.message.edit_text(
+            "⏱ <b>Таймаут!</b>\n\ngit pull выполнялся слишком долго (>30 сек).",
+            parse_mode='HTML',
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 Назад", callback_data="adm_menu")]
+            ])
+        )
+    except FileNotFoundError:
+        await query.message.edit_text(
+            "❌ <b>Git не найден</b>\n\nКоманда <code>git</code> недоступна на сервере.",
+            parse_mode='HTML',
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 Назад", callback_data="adm_menu")]
+            ])
+        )
+    except Exception as e:
+        await query.message.edit_text(
+            f"❌ <b>Ошибка:</b>\n<code>{str(e)}</code>",
+            parse_mode='HTML',
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 Назад", callback_data="adm_menu")]
+            ])
+        )
 
 
 # ─── Управление велком-буком ──────────────────────────────────
@@ -1361,6 +1578,7 @@ def get_handlers():
     return [
         CommandHandler("admin", admin_command),
         CommandHandler("cancel", cancel_command),
+        CallbackQueryHandler(admin_gitpull_callback, pattern="^adm_gitpull$"),
         CallbackQueryHandler(admin_menu_callback, pattern="^adm_menu$"),
         CallbackQueryHandler(admin_stats_callback, pattern="^adm_stats$"),
         CallbackQueryHandler(admin_users_callback, pattern="^adm_users$"),
@@ -1376,6 +1594,7 @@ def get_handlers():
         CallbackQueryHandler(admin_delete_item_callback, pattern="^adm_del_"),
         CallbackQueryHandler(admin_delete_item_ok_callback, pattern="^adm_delok_"),
         CallbackQueryHandler(admin_edit_item_callback, pattern="^adm_edit_"),
+        CallbackQueryHandler(admin_edit_field_callback, pattern="^adm_edf_"),
         CallbackQueryHandler(admin_add_item_callback, pattern="^adm_add_"),
         # ── Управление велком-буком ──
         CallbackQueryHandler(admin_welcome_mgmt_callback, pattern="^adm_welcome_mgmt$"),
