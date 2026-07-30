@@ -905,6 +905,29 @@ async def admin_gitpull_callback(update: Update, context: ContextTypes.DEFAULT_T
         if len(output) > 800:
             output = output[:800] + '...'
 
+        # Автоматически добавляем новые категории в menu.json
+        menu_cats_log = ''
+        try:
+            menu_data = load_menu()
+            existing_ids = [c['id'] for c in menu_data['categories']]
+            new_cats = [
+                {"id": "detox_water", "name": "💧 Детокс вода", "type": "bar", "items": []},
+                {"id": "detox_fresh", "name": "🥬 Детокс фреш", "type": "bar", "items": []},
+                {"id": "immune_shot", "name": "⚡ Иммунный шот", "type": "bar", "items": []},
+            ]
+            added = []
+            for cat in new_cats:
+                if cat['id'] not in existing_ids:
+                    menu_data['categories'].append(cat)
+                    added.append(cat['name'])
+            if added:
+                save_menu(menu_data)
+                menu_cats_log = f"✅ Добавлены категории: {', '.join(added)}\n"
+            else:
+                menu_cats_log = "✅ Категории меню актуальны\n"
+        except Exception as me:
+            menu_cats_log = f"⚠️ Ошибка обновления категорий: {me}\n"
+
         # Перезагружаем кеш меню
         menu_reloaded = False
         try:
@@ -927,6 +950,7 @@ async def admin_gitpull_callback(update: Update, context: ContextTypes.DEFAULT_T
             f"{status_icon} <b>git pull завершён</b>\n"
             f"{status_text}\n\n"
             f"<code>{output}</code>\n\n"
+            f"{menu_cats_log}"
             f"{menu_status}",
             parse_mode='HTML',
             reply_markup=InlineKeyboardMarkup([
