@@ -59,43 +59,78 @@ def save_welcome(data):
         json.dump(data, f, ensure_ascii=False, indent=4)
 
 
+# ─── Роли ───────────────────────────────────────────────────────
+
+ROLE_NAMES = {
+    'full':    '👑 Полный доступ',
+    'content': '📝 Контент',
+}
+
+
+def get_user_role(user) -> str:
+    """Вернуть роль пользователя: 'superadmin', 'full', 'content' или None."""
+    if is_superadmin(user):
+        return 'superadmin'
+    return db.get_admin_role(user.id)
+
+
+def can_access(user, section: str) -> bool:
+    """
+    Проверка доступа к разделу.
+    section: 'stats','users','rewards','broadcast','menu','welcome','tour','attendance','admins','gitpull'
+    """
+    role = get_user_role(user)
+    if role == 'superadmin':
+        return True
+    if role == 'full':
+        return section != 'admins'  # полный доступ везде кроме управления админами
+    if role == 'content':
+        return section in ('menu', 'welcome', 'tour')
+    return False
+
+
 # ─── Главное меню ───────────────────────────────────────────────
 
-def get_admin_keyboard():
-    return InlineKeyboardMarkup([
-        [
+def get_admin_keyboard(user):
+    role = get_user_role(user)
+    buttons = []
+    if role in ('superadmin', 'full'):
+        buttons.append([
             InlineKeyboardButton("📊 Статистика", callback_data="adm_stats"),
             InlineKeyboardButton("👥 Пользователи", callback_data="adm_users"),
-        ],
-        [
+        ])
+        buttons.append([
             InlineKeyboardButton("🎁 Награды", callback_data="adm_rewards"),
             InlineKeyboardButton("📤 Рассылка", callback_data="adm_bcast"),
-        ],
-        [
-            InlineKeyboardButton("🍽️ Управление меню", callback_data="adm_menu_mgmt"),
-            InlineKeyboardButton("⏱ Смены", callback_data="adm_attendance"),
-        ],
-        [
-            InlineKeyboardButton("📖 Велком-бук", callback_data="adm_welcome_mgmt"),
-            InlineKeyboardButton("🔑 Администраторы", callback_data="adm_admins"),
-        ],
-        [
-            InlineKeyboardButton("🎬 Экскурсия", callback_data="adm_tour_mgmt"),
-        ],
-        [
-            InlineKeyboardButton("🔄 Обновить с сервера", callback_data="adm_gitpull"),
-        ],
+        ])
+    buttons.append([
+        InlineKeyboardButton("🍽️ Управление меню", callback_data="adm_menu_mgmt"),
+        InlineKeyboardButton("⏱ Смены", callback_data="adm_attendance"),
     ])
+    buttons.append([
+        InlineKeyboardButton("📖 Велком-бук", callback_data="adm_welcome_mgmt"),
+        InlineKeyboardButton("🎬 Экскурсия", callback_data="adm_tour_mgmt"),
+    ])
+    if role == 'superadmin':
+        buttons.append([
+            InlineKeyboardButton("🔑 Администраторы", callback_data="adm_admins"),
+        ])
+        buttons.append([
+            InlineKeyboardButton("🔄 Обновить с сервера", callback_data="adm_gitpull"),
+        ])
+    return InlineKeyboardMarkup(buttons)
 
 
 async def admin_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not is_admin(update.effective_user):
         await update.message.reply_text("❌ У тебя нет доступа к админ-панели.")
         return
+    role = get_user_role(update.effective_user)
+    role_label = {'superadmin': '👑 Суперадмин', 'full': '👑 Полный доступ', 'content': '📝 Контент'}.get(role, '')
     await update.message.reply_text(
-        "⚙️ <b>Админ-панель</b>\n\nВыбери действие 👇",
+        f"⚙️ <b>Админ-панель</b>  <i>({role_label})</i>\n\nВыбери действие 👇",
         parse_mode='HTML',
-        reply_markup=get_admin_keyboard()
+        reply_markup=get_admin_keyboard(update.effective_user)
     )
 
 
@@ -105,10 +140,12 @@ async def admin_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE
         await query.answer("Нет доступа!")
         return
     await query.answer()
+    role = get_user_role(query.from_user)
+    role_label = {'superadmin': '👑 Суперадмин', 'full': '👑 Полный доступ', 'content': '📝 Контент'}.get(role, '')
     await query.message.edit_text(
-        "⚙️ <b>Админ-панель</b>\n\nВыбери действие 👇",
+        f"⚙️ <b>Админ-панель</b>  <i>({role_label})</i>\n\nВыбери действие 👇",
         parse_mode='HTML',
-        reply_markup=get_admin_keyboard()
+        reply_markup=get_admin_keyboard(query.from_user)
     )
 
 
@@ -1408,86 +1445,228 @@ async def handle_admin_tour_text(update: Update, context: ContextTypes.DEFAULT_T
 # ─── Управление администраторами ─────────────────────────────────
 
 async def admin_admins_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Список администраторов."""
+    """Список администраторов с кнопками управления."""
     query = update.callback_query
-    if not is_admin(query.from_user):
-        await query.answer("Нет доступа!")
+    if not is_superadmin(query.from_user):
+        await query.answer("Только суперадмин!")
         return
     await query.answer()
-
-    # Сбрасываем режим добавления если был активен
     context.user_data.pop('awaiting_add_admin', None)
 
     admins = db.get_db_admins()
-    is_super = is_superadmin(query.from_user)
 
     text = "🔑 <b>Администраторы</b>\n\n"
-    text += f"<b>Суперадмин (из .env):</b> @{ADMIN_USERNAME}\n\n"
+    text += f"<b>Суперадмин:</b> @{ADMIN_USERNAME or '—'}\n\n"
 
+    buttons = []
     if admins:
-        text += f"<b>Добавленные администраторы ({len(admins)}):</b>\n"
+        text += f"<b>Добавленные ({len(admins)}):</b>\n"
         for a in admins:
-            name = a.get('first_name') or '???'
-            username = f"@{a['username']}" if a.get('username') else ''
-            text += f"• {name} {username} (ID: {a['user_id']})\n"
+            name = a.get('first_name') or f"ID {a['user_id']}"
+            uname = f"@{a['username']}" if a.get('username') else ''
+            role_label = ROLE_NAMES.get(a.get('role', 'full'), '👑 Полный')
+            text += f"• {name} {uname} — {role_label}\n"
+            buttons.append([
+                InlineKeyboardButton(
+                    f"🗑 {name} ({role_label})",
+                    callback_data=f"adm_rmadm_{a['user_id']}"
+                )
+            ])
     else:
         text += "<i>Дополнительных администраторов нет.</i>"
 
-    buttons = []
-    if is_super:
-        # Только суперадмин может добавлять/удалять
-        if admins:
-            for a in admins:
-                name = a.get('first_name') or f"ID {a['user_id']}"
-                buttons.append([
-                    InlineKeyboardButton(
-                        f"❌ Убрать {name}",
-                        callback_data=f"adm_rmadm_{a['user_id']}"
-                    )
-                ])
-        buttons.append([InlineKeyboardButton("➕ Добавить администратора", callback_data="adm_addadm")])
-    else:
-        text += "\n\n<i>Только суперадмин может управлять списком.</i>"
-
+    buttons.append([InlineKeyboardButton("➕ Добавить администратора", callback_data="adm_addadm")])
     buttons.append([InlineKeyboardButton("🔙 Назад", callback_data="adm_menu")])
 
-    await query.message.edit_text(text, parse_mode='HTML', reply_markup=InlineKeyboardMarkup(buttons))
+    await query.message.edit_text(
+        text, parse_mode='HTML',
+        reply_markup=InlineKeyboardMarkup(buttons)
+    )
 
 
 async def admin_add_admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Начать добавление нового администратора."""
+    """Показать список пользователей для выбора нового админа."""
     query = update.callback_query
     if not is_superadmin(query.from_user):
-        await query.answer("Только суперадмин может это делать!")
+        await query.answer("Только суперадмин!")
         return
     await query.answer()
 
-    context.user_data['awaiting_add_admin'] = True
+    users = db.get_non_admin_users(limit=30)
+
+    if not users:
+        await query.message.edit_text(
+            "👥 <b>Нет доступных пользователей</b>\n\n"
+            "Все зарегистрированные пользователи уже являются администраторами,\n"
+            "или ещё никто не написал /start боту.",
+            parse_mode='HTML',
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 Назад", callback_data="adm_admins")]
+            ])
+        )
+        return
+
+    text = "👤 <b>Выбери пользователя</b>\n\nКого назначить администратором?\n\n"
+    buttons = []
+    for u in users:
+        name = u.get('first_name') or f"ID {u['user_id']}"
+        uname = f" @{u['username']}" if u.get('username') else ''
+        buttons.append([
+            InlineKeyboardButton(
+                f"{name}{uname}",
+                callback_data=f"adm_pickusr_{u['user_id']}"
+            )
+        ])
+    buttons.append([InlineKeyboardButton("🔙 Назад", callback_data="adm_admins")])
 
     await query.message.edit_text(
-        "🔑 <b>Добавление администратора</b>\n\n"
-        "Есть 3 способа добавить человека:\n\n"
-        "1️⃣ <b>Переслать</b> любое его сообщение сюда\n"
-        "2️⃣ Написать его <b>@username</b>\n"
-        "3️⃣ Написать его <b>числовой Telegram ID</b>\n\n"
-        "⚠️ Человек должен хотя бы раз написать /start боту.\n\n"
-        "Отправь данные прямо сейчас 👇",
+        text, parse_mode='HTML',
+        reply_markup=InlineKeyboardMarkup(buttons)
+    )
+
+
+async def admin_pick_user_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Пользователь выбран — выбрать роль."""
+    query = update.callback_query
+    if not is_superadmin(query.from_user):
+        await query.answer("Только суперадмин!")
+        return
+    await query.answer()
+
+    user_id = int(query.data.replace("adm_pickusr_", ""))
+
+    # Ищем пользователя в БД
+    conn = db.get_connection()
+    c = conn.cursor()
+    c.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
+    row = c.fetchone()
+    conn.close()
+
+    if not row:
+        await query.answer("Пользователь не найден!")
+        return
+
+    row = dict(row)
+    name = row.get('first_name') or f"ID {user_id}"
+    uname = f" @{row['username']}" if row.get('username') else ''
+
+    await query.message.edit_text(
+        f"👤 <b>{name}{uname}</b>\n\n"
+        "Выбери <b>уровень доступа</b>:\n\n"
+        "👑 <b>Полный доступ</b> — статистика, пользователи, награды, рассылка, меню, велком-бук, экскурсия, смены\n\n"
+        "📝 <b>Контент</b> — только меню, велком-бук и экскурсия",
         parse_mode='HTML',
         reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("❌ Отмена", callback_data="adm_admins")]
+            [InlineKeyboardButton("👑 Полный доступ", callback_data=f"adm_setrole_full_{user_id}")],
+            [InlineKeyboardButton("📝 Контент (меню + велком)", callback_data=f"adm_setrole_content_{user_id}")],
+            [InlineKeyboardButton("❌ Отмена", callback_data="adm_admins")],
         ])
     )
 
 
-async def admin_remove_admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Убрать администратора."""
+async def admin_set_role_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Установить роль и добавить администратора."""
     query = update.callback_query
     if not is_superadmin(query.from_user):
-        await query.answer("Только суперадмин может это делать!")
+        await query.answer("Только суперадмин!")
+        return
+    await query.answer()
+
+    parts = query.data.replace("adm_setrole_", "").split("_", 1)
+    role = parts[0]
+    user_id = int(parts[1])
+
+    # Получаем данные пользователя
+    conn = db.get_connection()
+    c = conn.cursor()
+    c.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
+    row = c.fetchone()
+    conn.close()
+
+    if not row:
+        await query.answer("Пользователь не найден!")
+        return
+
+    row = dict(row)
+    username = row.get('username') or ''
+    first_name = row.get('first_name') or ''
+    name = first_name or f"ID {user_id}"
+    uname = f" @{username}" if username else ''
+
+    added = db.add_db_admin(
+        user_id=user_id,
+        username=username,
+        first_name=first_name,
+        added_by=query.from_user.id,
+        role=role
+    )
+
+    role_label = ROLE_NAMES.get(role, role)
+
+    if added:
+        await query.message.edit_text(
+            f"✅ <b>{name}{uname}</b> назначен администратором!\n\n"
+            f"Роль: {role_label}\n"
+            f"Теперь он может войти в /admin",
+            parse_mode='HTML',
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 К администраторам", callback_data="adm_admins")]
+            ])
+        )
+    else:
+        await query.message.edit_text(
+            f"ℹ️ <b>{name}{uname}</b> уже является администратором.",
+            parse_mode='HTML',
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 К администраторам", callback_data="adm_admins")]
+            ])
+        )
+
+
+async def admin_remove_admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Подтверждение удаления администратора."""
+    query = update.callback_query
+    if not is_superadmin(query.from_user):
+        await query.answer("Только суперадмин!")
         return
     await query.answer()
 
     target_id = int(query.data.replace("adm_rmadm_", ""))
+
+    admins = db.get_db_admins()
+    target = next((a for a in admins if a['user_id'] == target_id), None)
+    if not target:
+        await query.answer("Не найден!")
+        return
+
+    name = target.get('first_name') or f"ID {target_id}"
+    uname = f" @{target['username']}" if target.get('username') else ''
+    role_label = ROLE_NAMES.get(target.get('role', 'full'), '?')
+
+    await query.message.edit_text(
+        f"⚠️ <b>Убрать администратора?</b>\n\n"
+        f"👤 {name}{uname}\n"
+        f"Роль: {role_label}\n\n"
+        f"После удаления он потеряет доступ к /admin.",
+        parse_mode='HTML',
+        reply_markup=InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton("✅ Да, удалить", callback_data=f"adm_rmadm_ok_{target_id}"),
+                InlineKeyboardButton("❌ Отмена", callback_data="adm_admins"),
+            ]
+        ])
+    )
+
+
+async def admin_confirm_remove_admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Подтверждённое удаление администратора."""
+    query = update.callback_query
+    if not is_superadmin(query.from_user):
+        await query.answer("Только суперадмин!")
+        return
+    await query.answer()
+
+    target_id = int(query.data.replace("adm_rmadm_ok_", ""))
     removed = db.remove_db_admin(target_id)
 
     if removed:
@@ -1499,110 +1678,6 @@ async def admin_remove_admin_callback(update: Update, context: ContextTypes.DEFA
         )
     else:
         await query.answer("Пользователь не найден в списке.")
-
-
-async def handle_add_admin_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
-    """Обработка пересланного сообщения или ID для добавления админа."""
-    if not context.user_data.get('awaiting_add_admin'):
-        return False
-    if not is_superadmin(update.effective_user):
-        return False
-
-    msg = update.message
-
-    # Если переслано сообщение от другого пользователя
-    if msg.forward_from:
-        target = msg.forward_from
-        user_id = target.id
-        username = target.username or ''
-        first_name = target.first_name or ''
-    elif msg.forward_date and not msg.forward_from:
-        # Переслано сообщение, но профиль скрыт
-        await msg.reply_text(
-            "❌ Не удалось получить профиль пользователя, так как у него скрыт аккаунт при пересылке сообщений.\n"
-            "Вы можете добавить его по <b>@username</b> или попросите числовой ID.",
-            parse_mode='HTML'
-        )
-        return True
-    elif msg.text and msg.text.strip().startswith('@'):
-        # Введён @username
-        target_username = msg.text.strip()[1:]
-        conn = db.get_connection()
-        c = conn.cursor()
-        c.execute('SELECT * FROM users WHERE username = ? COLLATE NOCASE', (target_username,))
-        row = c.fetchone()
-        conn.close()
-        if row:
-            row = dict(row)
-            user_id = row['user_id']
-            username = row.get('username') or ''
-            first_name = row.get('first_name') or ''
-        else:
-            await msg.reply_text(
-                "❌ Пользователь с таким <b>@username</b> не найден в базе бота.\n"
-                "Сначала он должен хотя бы раз нажать /start в боте.",
-                parse_mode='HTML'
-            )
-            return True
-    elif msg.text and msg.text.strip().lstrip('-').isdigit():
-        # Введён числовой Telegram ID
-        user_id = int(msg.text.strip())
-        # Ищем в БД пользователей
-        conn = db.get_connection()
-        c = conn.cursor()
-        c.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
-        row = c.fetchone()
-        conn.close()
-        if row:
-            row = dict(row)
-            username = row.get('username') or ''
-            first_name = row.get('first_name') or ''
-        else:
-            username = ''
-            first_name = f'ID {user_id}'
-    else:
-        await msg.reply_text(
-            "❓ Не понял.\n"
-            "Перешлите сообщение, отправьте числовой <b>Telegram ID</b> или <b>@username</b> пользователя.\n\n"
-            "/cancel — отмена",
-            parse_mode='HTML'
-        )
-        return True
-
-    # Проверяем что это не суперадмин (он и так имеет доступ)
-    if ADMIN_ID and user_id == ADMIN_ID:
-        await msg.reply_text("ℹ️ Этот пользователь уже является суперадмином.")
-        context.user_data.pop('awaiting_add_admin', None)
-        return True
-
-    added = db.add_db_admin(
-        user_id=user_id,
-        username=username,
-        first_name=first_name,
-        added_by=update.effective_user.id
-    )
-
-    context.user_data.pop('awaiting_add_admin', None)
-
-    name_display = f"{first_name} (@{username})" if username else first_name
-    if added:
-        await msg.reply_text(
-            f"✅ <b>{name_display}</b> теперь администратор!\n\n"
-            f"Telegram ID: <code>{user_id}</code>",
-            parse_mode='HTML',
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔙 К администраторам", callback_data="adm_admins")]
-            ])
-        )
-    else:
-        await msg.reply_text(
-            f"ℹ️ <b>{name_display}</b> уже является администратором.",
-            parse_mode='HTML',
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔙 К администраторам", callback_data="adm_admins")]
-            ])
-        )
-    return True
 
 
 def get_handlers():
@@ -1643,7 +1718,11 @@ def get_handlers():
         # ── Управление администраторами ──
         CallbackQueryHandler(admin_admins_callback, pattern="^adm_admins$"),
         CallbackQueryHandler(admin_add_admin_callback, pattern="^adm_addadm$"),
+        CallbackQueryHandler(admin_pick_user_callback, pattern="^adm_pickusr_"),
+        CallbackQueryHandler(admin_set_role_callback, pattern="^adm_setrole_"),
+        CallbackQueryHandler(admin_confirm_remove_admin_callback, pattern="^adm_rmadm_ok_"),
         CallbackQueryHandler(admin_remove_admin_callback, pattern="^adm_rmadm_"),
         # Текстовые ответы и фото (должен быть последним!)
         MessageHandler((filters.TEXT | filters.PHOTO) & ~filters.COMMAND, handle_admin_text),
     ]
+

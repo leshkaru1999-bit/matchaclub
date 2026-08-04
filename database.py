@@ -57,9 +57,15 @@ def init_db():
         user_id INTEGER PRIMARY KEY,
         username TEXT,
         first_name TEXT,
+        role TEXT DEFAULT 'full',
         added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         added_by INTEGER
     )''')
+    # Миграция: добавляем role если столбца нет
+    try:
+        c.execute('ALTER TABLE admins ADD COLUMN role TEXT DEFAULT "full"')
+    except Exception:
+        pass
     conn.commit()
     conn.close()
 
@@ -314,14 +320,14 @@ def is_db_admin(user_id: int) -> bool:
     return result
 
 
-def add_db_admin(user_id: int, username: str, first_name: str, added_by: int) -> bool:
+def add_db_admin(user_id: int, username: str, first_name: str, added_by: int, role: str = 'full') -> bool:
     """Добавить админа в БД. Возвращает True если добавлен, False если уже есть."""
     conn = get_connection()
     c = conn.cursor()
     try:
         c.execute(
-            'INSERT INTO admins (user_id, username, first_name, added_by) VALUES (?, ?, ?, ?)',
-            (user_id, username, first_name, added_by)
+            'INSERT INTO admins (user_id, username, first_name, role, added_by) VALUES (?, ?, ?, ?, ?)',
+            (user_id, username, first_name, role, added_by)
         )
         conn.commit()
         return True
@@ -340,3 +346,29 @@ def remove_db_admin(user_id: int) -> bool:
     conn.commit()
     conn.close()
     return deleted
+
+
+def get_admin_role(user_id: int) -> str:
+    """Получить роль админа. Возвращает 'full', 'content' или None."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('SELECT role FROM admins WHERE user_id = ?', (user_id,))
+    row = c.fetchone()
+    conn.close()
+    return dict(row)['role'] if row else None
+
+
+def get_non_admin_users(limit: int = 30) -> list:
+    """Пользователи которые ещё не являются админами."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        SELECT user_id, username, first_name
+        FROM users
+        WHERE user_id NOT IN (SELECT user_id FROM admins)
+        ORDER BY registered_at DESC
+        LIMIT ?
+    ''', (limit,))
+    rows = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return rows
