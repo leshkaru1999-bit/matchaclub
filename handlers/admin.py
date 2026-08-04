@@ -1415,6 +1415,9 @@ async def admin_admins_callback(update: Update, context: ContextTypes.DEFAULT_TY
         return
     await query.answer()
 
+    # Сбрасываем режим добавления если был активен
+    context.user_data.pop('awaiting_add_admin', None)
+
     admins = db.get_db_admins()
     is_super = is_superadmin(query.from_user)
 
@@ -1461,14 +1464,18 @@ async def admin_add_admin_callback(update: Update, context: ContextTypes.DEFAULT
 
     context.user_data['awaiting_add_admin'] = True
 
-    await query.message.reply_text(
+    await query.message.edit_text(
         "🔑 <b>Добавление администратора</b>\n\n"
-        "Попросите нужного человека написать боту любое сообщение, "
-        "чтобы он зарегистрировался.\n\n"
-        "Затем перешлите мне его сообщение из Telegram "
-        "<b>или напишите его Telegram ID</b> (число).\n\n"
-        "/cancel — отмена",
-        parse_mode='HTML'
+        "Есть 3 способа добавить человека:\n\n"
+        "1️⃣ <b>Переслать</b> любое его сообщение сюда\n"
+        "2️⃣ Написать его <b>@username</b>\n"
+        "3️⃣ Написать его <b>числовой Telegram ID</b>\n\n"
+        "⚠️ Человек должен хотя бы раз написать /start боту.\n\n"
+        "Отправь данные прямо сейчас 👇",
+        parse_mode='HTML',
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("❌ Отмена", callback_data="adm_admins")]
+        ])
     )
 
 
