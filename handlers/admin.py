@@ -525,7 +525,9 @@ async def admin_edit_item_callback(update: Update, context: ContextTypes.DEFAULT
         f"<b>Описание:</b> {item.get('description', '—')}\n"
         f"<b>Состав:</b> {item.get('ingredients', '—')}\n"
         f"<b>Объём:</b> {item.get('volume', '—')}\n"
-        f"<b>КБЖУ:</b> {item.get('calories', 0)}/{item.get('protein', 0)}/{item.get('fat', 0)}/{item.get('carbs', 0)}\n\n"
+        f"<b>КБЖУ:</b> {item.get('calories', 0)}/{item.get('protein', 0)}/{item.get('fat', 0)}/{item.get('carbs', 0)}\n"
+        f"<b>Аллергены:</b> {item.get('allergens', '—')}\n"
+        f"<b>Хит продаж:</b> {'Да 🔥' if item.get('is_hit') else 'Нет'}\n\n"
         f"Выбери, что хочешь изменить:"
     )
 
@@ -541,6 +543,10 @@ async def admin_edit_item_callback(update: Update, context: ContextTypes.DEFAULT
         [
             InlineKeyboardButton("📊 КБЖУ", callback_data=f"adm_edf_macros_{cat_id}_{item_idx}"),
             InlineKeyboardButton("🥤 Объём", callback_data=f"adm_edf_volume_{cat_id}_{item_idx}")
+        ],
+        [
+            InlineKeyboardButton("⚠️ Аллергены", callback_data=f"adm_edf_aller_{cat_id}_{item_idx}"),
+            InlineKeyboardButton(f"🔥 Хит: {'Да' if item.get('is_hit') else 'Нет'}", callback_data=f"adm_edf_hit_{cat_id}_{item_idx}")
         ],
         [InlineKeyboardButton("🔙 Назад", callback_data=f"adm_mitem_{cat_id}")]
     ]
@@ -564,6 +570,19 @@ async def admin_edit_field_callback(update: Update, context: ContextTypes.DEFAUL
     context.user_data['edit_item_idx'] = item_idx
     context.user_data['edit_field'] = field
 
+    if field == 'hit':
+        context.user_data['awaiting_edit'] = False
+        data = load_menu()
+        category = next((c for c in data['categories'] if c['id'] == cat_id), None)
+        if category and item_idx < len(category['items']):
+            item = category['items'][item_idx]
+            item['is_hit'] = not item.get('is_hit', False)
+            save_menu(data)
+        # Перерисовываем карточку
+        query.data = f"adm_edit_{cat_id}_{item_idx}"
+        await admin_edit_item_callback(update, context)
+        return
+
     if field == 'name':
         prompt = "Отправь новое <b>Название</b> блюда (только текст).\nИли /cancel для отмены."
     elif field == 'desc':
@@ -576,6 +595,8 @@ async def admin_edit_field_callback(update: Update, context: ContextTypes.DEFAUL
         prompt = "Отправь новые <b>КБЖУ</b> (через пробел или запятую: Калории Белки Жиры Углеводы).\nНапример: <code>250 15 10 30</code>\nИли /cancel для отмены."
     elif field == 'volume':
         prompt = "Отправь новый <b>Объём</b> порции (например: <code>250 мл</code>, <code>30 мл</code>, <code>500 г</code>).\nИли /cancel для отмены."
+    elif field == 'aller':
+        prompt = "Отправь список <b>Аллергенов</b> (например: <code>мед, орехи, молоко</code>).\nДля удаления отправь <code>-</code>.\nИли /cancel для отмены."
 
     await query.message.edit_text(prompt, parse_mode='HTML', reply_markup=InlineKeyboardMarkup([
         [InlineKeyboardButton("🔙 Отмена", callback_data=f"adm_edit_{cat_id}_{item_idx}")]
@@ -602,7 +623,9 @@ async def admin_add_item_callback(update: Update, context: ContextTypes.DEFAULT_
         'name': '',
         'description': '',
         'ingredients': '',
-        'volume': ''
+        'volume': '',
+        'allergens': '',
+        'is_hit': False
     }
 
     await query.message.edit_text(
@@ -732,6 +755,11 @@ async def handle_admin_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text("❌ Нужно отправить текст (например: 250 мл).")
                 return
             item['volume'] = text
+        elif field == 'aller':
+            if not text:
+                await update.message.reply_text("❌ Нужно отправить текст.")
+                return
+            item['allergens'] = "" if text == "-" else text
                 
         save_menu(data)
         await update.message.reply_text(

@@ -291,15 +291,18 @@ main {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: none;
+    background: var(--tg-theme-bg-color, #ffffff);
     border: none;
     color: var(--primary-color);
     font-family: 'Outfit', sans-serif;
     font-weight: 700;
     font-size: 16px;
+    cursor: pointer;
     padding: 10px 0;
     margin-bottom: 20px;
-    cursor: pointer;
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 .back-icon { font-size: 20px; }
 
@@ -676,3 +679,40 @@ main {
 .tour-tip-icon {
     font-size: 24px;
 }
+
+/* ── Menu Item Additions ── */
+.hit-badge-photo {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: linear-gradient(135deg, #ff4b2b, #ff416c);
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(255, 65, 108, 0.4);
+    z-index: 10;
+}
+
+.hit-badge-inline {
+    display: inline-block;
+    background: linear-gradient(135deg, #ff4b2b, #ff416c);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 8px;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+.menu-item-allergens {
+    font-size: 12px;
+    color: #eab308;
+    margin-top: 6px;
+    background: rgba(234, 179, 8, 0.1);
+    padding: 6px 8px;
+    border-radius: 6px;
+}
+
