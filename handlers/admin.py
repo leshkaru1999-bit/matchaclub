@@ -578,9 +578,39 @@ async def admin_edit_field_callback(update: Update, context: ContextTypes.DEFAUL
             item = category['items'][item_idx]
             item['is_hit'] = not item.get('is_hit', False)
             save_menu(data)
-        # Перерисовываем карточку
-        query.data = f"adm_edit_{cat_id}_{item_idx}"
-        await admin_edit_item_callback(update, context)
+            
+            # Рендерим обновленную карточку сразу
+            text = (
+                f"✏️ <b>Редактирование блюда</b>\n\n"
+                f"<b>Название:</b> {item.get('name', '—')}\n"
+                f"<b>Описание:</b> {item.get('description', '—')}\n"
+                f"<b>Состав:</b> {item.get('ingredients', '—')}\n"
+                f"<b>Объём:</b> {item.get('volume', '—')}\n"
+                f"<b>КБЖУ:</b> {item.get('calories', 0)}/{item.get('protein', 0)}/{item.get('fat', 0)}/{item.get('carbs', 0)}\n"
+                f"<b>Аллергены:</b> {item.get('allergens', '—')}\n"
+                f"<b>Хит продаж:</b> {'Да 🔥' if item.get('is_hit') else 'Нет'}\n\n"
+                f"Выбери, что хочешь изменить:"
+            )
+            buttons = [
+                [
+                    InlineKeyboardButton("✏️ Название", callback_data=f"adm_edf_name_{cat_id}_{item_idx}"),
+                    InlineKeyboardButton("📝 Описание", callback_data=f"adm_edf_desc_{cat_id}_{item_idx}")
+                ],
+                [
+                    InlineKeyboardButton("🥗 Состав", callback_data=f"adm_edf_ingr_{cat_id}_{item_idx}"),
+                    InlineKeyboardButton("📸 Фото", callback_data=f"adm_edf_photo_{cat_id}_{item_idx}")
+                ],
+                [
+                    InlineKeyboardButton("📊 КБЖУ", callback_data=f"adm_edf_macros_{cat_id}_{item_idx}"),
+                    InlineKeyboardButton("🥤 Объём", callback_data=f"adm_edf_volume_{cat_id}_{item_idx}")
+                ],
+                [
+                    InlineKeyboardButton("⚠️ Аллергены", callback_data=f"adm_edf_aller_{cat_id}_{item_idx}"),
+                    InlineKeyboardButton(f"🔥 Хит: {'Да' if item.get('is_hit') else 'Нет'}", callback_data=f"adm_edf_hit_{cat_id}_{item_idx}")
+                ],
+                [InlineKeyboardButton("🔙 Назад", callback_data=f"adm_mitem_{cat_id}")]
+            ]
+            await query.message.edit_text(text, parse_mode='HTML', reply_markup=InlineKeyboardMarkup(buttons))
         return
 
     if field == 'name':
