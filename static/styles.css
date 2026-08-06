@@ -299,8 +299,9 @@ main {
     font-size: 16px;
     cursor: pointer;
     padding: 15px 20px;
-    margin: -20px -20px 20px -20px;
+    margin: -21px -20px 20px -20px;
     width: calc(100% + 40px);
+    border-radius: 0;
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     position: sticky;
     top: 0;
