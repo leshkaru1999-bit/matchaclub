@@ -303,7 +303,7 @@ main {
     width: calc(100% + 40px);
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     position: sticky;
-    top: 61px;
+    top: 0;
     z-index: 100;
 }
 .back-icon { font-size: 20px; }
