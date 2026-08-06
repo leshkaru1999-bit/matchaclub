@@ -347,6 +347,8 @@ const app = {
         catsContainer.innerHTML = '';
         catsContainer.classList.remove('hidden');
         itemsContainer.classList.add('hidden');
+        const backBtn = document.getElementById('menu-back-btn');
+        if (backBtn) backBtn.classList.add('hidden');
 
         const categories = this.menuData.categories.filter(c => c.type === type);
         
@@ -372,6 +374,8 @@ const app = {
         
         catsContainer.classList.add('hidden');
         itemsContainer.classList.remove('hidden');
+        const backBtn = document.getElementById('menu-back-btn');
+        if (backBtn) backBtn.classList.remove('hidden');
         itemsGrid.innerHTML = '';
 
         category.items.forEach(item => {

@@ -227,15 +227,15 @@
 
     <template id="tpl-menu">
         <div class="page menu-page animate-fade-in">
+            <button id="menu-back-btn" class="back-btn hidden" onclick="app.renderMenuCategories()">
+                <span class="back-icon">←</span> Назад
+            </button>
             <div class="menu-tabs glass-panel">
                 <button class="tab-btn active" data-type="kitchen">🍽️ Кухня</button>
                 <button class="tab-btn" data-type="bar">🍹 Бар</button>
             </div>
             <div id="categories-container" class="categories-grid"></div>
             <div id="items-container" class="items-list hidden">
-                <button class="back-btn" onclick="app.renderMenuCategories()">
-                    <span class="back-icon">←</span> Назад
-                </button>
                 <div id="items-grid" class="grid-2col"></div>
             </div>
         </div>
