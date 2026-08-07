@@ -478,8 +478,10 @@ const app = {
         
         try {
             const res = await fetch(`${API_BASE}/api/profile/${this.user.id}`);
-            const stats = await res.json();
+            const data = await res.json();
+            const stats = data.stats || data;
             this.user.stats = stats;
+            if (data.reward_cost) this.rewardCost = data.reward_cost;
             
             document.getElementById('points-val').textContent = stats.points;
             document.getElementById('prof-points').textContent = stats.points;
