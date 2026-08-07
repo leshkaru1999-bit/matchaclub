@@ -567,10 +567,14 @@ async def admin_edit_field_callback(update: Update, context: ContextTypes.DEFAUL
         return
     await query.answer()
 
-    parts = query.data.replace("adm_edf_", "").rsplit("_", 2)
+    parts = query.data.replace("adm_edf_", "").split("_", 1)
     field = parts[0]
-    cat_id = parts[1]
-    item_idx = int(parts[2])
+    rest = parts[1]
+    
+    cat_id, item_idx_str = rest.rsplit("_", 1)
+    item_idx = int(item_idx_str)
+
+    context.user_data['edit_field'] = field
 
     context.user_data['awaiting_edit'] = True
     context.user_data['edit_cat_id'] = cat_id
