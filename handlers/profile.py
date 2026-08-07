@@ -2,7 +2,7 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CallbackQueryHandler
 import database as db
-from config import POINTS_FOR_DRINK
+from config import get_settings
 
 
 async def profile_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -30,9 +30,10 @@ async def profile_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         rank = "🫖 Стажёр"
 
     # Прогресс до следующего напитка
-    drinks_available = points // POINTS_FOR_DRINK
-    progress_to_next = points % POINTS_FOR_DRINK
-    progress_bar_filled = int((progress_to_next / POINTS_FOR_DRINK) * 10)
+    cost = get_settings().get('points_for_drink', 100)
+    drinks_available = points // cost
+    progress_to_next = points % cost
+    progress_bar_filled = int((progress_to_next / cost) * 10)
     progress_bar = "▓" * progress_bar_filled + "░" * (10 - progress_bar_filled)
 
     text = (
@@ -42,7 +43,7 @@ async def profile_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"━━━━━━━━━━━━━━━━\n"
         f"💎 <b>Баллы: {points}</b>\n"
         f"🍹 Напитков доступно: <b>{drinks_available}</b>\n"
-        f"📊 До след. напитка: [{progress_bar}] {progress_to_next}/{POINTS_FOR_DRINK}\n"
+        f"📊 До след. напитка: [{progress_bar}] {progress_to_next}/{cost}\n"
         f"━━━━━━━━━━━━━━━━\n\n"
         f"📝 <b>Статистика:</b>\n"
         f"🎯 Квизов пройдено: {stats['quizzes_taken']}\n"
@@ -54,7 +55,7 @@ async def profile_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = []
     if drinks_available > 0:
         buttons.append([InlineKeyboardButton(
-            f"🍹 Обменять {POINTS_FOR_DRINK} баллов на напиток",
+            f"🍹 Обменять {cost} баллов на напиток",
             callback_data="request_reward"
         )])
     buttons.append([InlineKeyboardButton("🏅 Рейтинг", callback_data="leaderboard")])
