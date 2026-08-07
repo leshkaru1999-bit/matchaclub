@@ -103,17 +103,21 @@ def save_json(filename, data):
 
 @app.post("/api/init_user")
 async def init_user(user: UserInit):
+    from config import get_settings
     db.get_or_create_user(user.id, user.username or "", user.first_name)
     stats = db.get_user_stats(user.id)
-    return {"status": "ok", "stats": stats}
+    cost = get_settings().get('points_for_drink', 100)
+    return {"status": "ok", "stats": stats, "reward_cost": cost}
 
 
 @app.get("/api/profile/{user_id}")
 async def get_profile(user_id: int):
+    from config import get_settings
     stats = db.get_user_stats(user_id)
     if not stats:
         raise HTTPException(status_code=404, detail="User not found")
-    return stats
+    cost = get_settings().get('points_for_drink', 100)
+    return {"stats": stats, "reward_cost": cost}
 
 
 @app.get("/api/menu")
@@ -173,12 +177,13 @@ async def get_leaderboard():
 
 @app.post("/api/reward/request")
 async def request_reward(req: RewardRequest):
-    from config import POINTS_FOR_DRINK
+    from config import get_settings
+    cost = get_settings().get('points_for_drink', 100)
     stats = db.get_user_stats(req.user_id)
-    if not stats or stats['points'] < POINTS_FOR_DRINK:
+    if not stats or stats['points'] < cost:
         raise HTTPException(status_code=400, detail="Недостаточно баллов")
-    reward_id = db.create_reward_request(req.user_id, POINTS_FOR_DRINK)
-    return {"status": "ok", "reward_id": reward_id, "new_points": stats['points'] - POINTS_FOR_DRINK}
+    reward_id = db.create_reward_request(req.user_id, cost)
+    return {"status": "ok", "reward_id": reward_id, "new_points": stats['points'] - cost}
 
 
 @app.post("/api/attendance")

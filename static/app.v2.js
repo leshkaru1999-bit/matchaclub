@@ -44,6 +44,7 @@ const app = {
             });
             const data = await res.json();
             this.user = { ...user, stats: data.stats };
+            this.rewardCost = data.reward_cost || 20;
             
             document.getElementById('points-val').textContent = data.stats.points;
             document.getElementById('user-points').classList.remove('hidden');
@@ -400,6 +401,10 @@ const app = {
                 html += `<p class="menu-item-allergens">⚠️ <b>Аллергены:</b> ${item.allergens}</p>`;
             }
             
+            if (item.prep_time) {
+                html += `<p class="menu-item-prep" style="font-size: 13px; color: #888; margin-bottom: 5px;">⏱ <b>Время готовки:</b> ${item.prep_time}</p>`;
+            }
+            
             if (item.calories) {
                 html += `<div class="kbzhu-container">
                     <span class="kbzhu-pill">${item.calories} ккал</span>
@@ -509,7 +514,8 @@ const app = {
 
     async requestReward() {
         tg.HapticFeedback.notificationOccurred('warning');
-        tg.showConfirm('Потратить 20 баллов на 1 бесплатный напиток?', async (confirmed) => {
+        const cost = this.rewardCost || 20;
+        tg.showConfirm(`Потратить ${cost} баллов на 1 бесплатный напиток?`, async (confirmed) => {
             if (confirmed) {
                 try {
                     const res = await fetch(`${API_BASE}/api/reward/request`, {

@@ -43,6 +43,9 @@ def main():
     # Создание приложения
     app = Application.builder().token(BOT_TOKEN).build()
 
+    import publisher
+    publisher.setup_jobs(app.job_queue)
+
     # Регистрация обработчиков (порядок важен!)
     # 1. Команды
     for handler in start.get_handlers():

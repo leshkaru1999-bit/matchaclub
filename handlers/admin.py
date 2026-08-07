@@ -111,6 +111,9 @@ def get_admin_keyboard(user):
         InlineKeyboardButton("📖 Велком-бук", callback_data="adm_welcome_mgmt"),
         InlineKeyboardButton("🎬 Экскурсия", callback_data="adm_tour_mgmt"),
     ])
+    buttons.append([
+        InlineKeyboardButton("🎯 Квиз и Награды", callback_data="adm_quiz_mgmt"),
+    ])
     if role == 'superadmin':
         buttons.append([
             InlineKeyboardButton("🔑 Администраторы", callback_data="adm_admins"),
@@ -527,6 +530,7 @@ async def admin_edit_item_callback(update: Update, context: ContextTypes.DEFAULT
         f"<b>Объём:</b> {item.get('volume', '—')}\n"
         f"<b>КБЖУ:</b> {item.get('calories', 0)}/{item.get('protein', 0)}/{item.get('fat', 0)}/{item.get('carbs', 0)}\n"
         f"<b>Аллергены:</b> {item.get('allergens', '—')}\n"
+        f"<b>Время готовки:</b> {item.get('prep_time', '—')}\n"
         f"<b>Хит продаж:</b> {'Да 🔥' if item.get('is_hit') else 'Нет'}\n\n"
         f"Выбери, что хочешь изменить:"
     )
@@ -547,6 +551,9 @@ async def admin_edit_item_callback(update: Update, context: ContextTypes.DEFAULT
         [
             InlineKeyboardButton("⚠️ Аллергены", callback_data=f"adm_edf_aller_{cat_id}_{item_idx}"),
             InlineKeyboardButton(f"🔥 Хит: {'Да' if item.get('is_hit') else 'Нет'}", callback_data=f"adm_edf_hit_{cat_id}_{item_idx}")
+        ],
+        [
+            InlineKeyboardButton("⏱ Время готовки", callback_data=f"adm_edf_prep_{cat_id}_{item_idx}")
         ],
         [InlineKeyboardButton("🔙 Назад", callback_data=f"adm_mitem_{cat_id}")]
     ]
@@ -588,6 +595,7 @@ async def admin_edit_field_callback(update: Update, context: ContextTypes.DEFAUL
                 f"<b>Объём:</b> {item.get('volume', '—')}\n"
                 f"<b>КБЖУ:</b> {item.get('calories', 0)}/{item.get('protein', 0)}/{item.get('fat', 0)}/{item.get('carbs', 0)}\n"
                 f"<b>Аллергены:</b> {item.get('allergens', '—')}\n"
+                f"<b>Время готовки:</b> {item.get('prep_time', '—')}\n"
                 f"<b>Хит продаж:</b> {'Да 🔥' if item.get('is_hit') else 'Нет'}\n\n"
                 f"Выбери, что хочешь изменить:"
             )
@@ -608,6 +616,9 @@ async def admin_edit_field_callback(update: Update, context: ContextTypes.DEFAUL
                     InlineKeyboardButton("⚠️ Аллергены", callback_data=f"adm_edf_aller_{cat_id}_{item_idx}"),
                     InlineKeyboardButton(f"🔥 Хит: {'Да' if item.get('is_hit') else 'Нет'}", callback_data=f"adm_edf_hit_{cat_id}_{item_idx}")
                 ],
+                [
+                    InlineKeyboardButton("⏱ Время готовки", callback_data=f"adm_edf_prep_{cat_id}_{item_idx}")
+                ],
                 [InlineKeyboardButton("🔙 Назад", callback_data=f"adm_mitem_{cat_id}")]
             ]
             await query.message.edit_text(text, parse_mode='HTML', reply_markup=InlineKeyboardMarkup(buttons))
@@ -627,6 +638,8 @@ async def admin_edit_field_callback(update: Update, context: ContextTypes.DEFAUL
         prompt = "Отправь новый <b>Объём</b> порции (например: <code>250 мл</code>, <code>30 мл</code>, <code>500 г</code>).\nИли /cancel для отмены."
     elif field == 'aller':
         prompt = "Отправь список <b>Аллергенов</b> (например: <code>мед, орехи, молоко</code>).\nДля удаления отправь <code>-</code>.\nИли /cancel для отмены."
+    elif field == 'prep':
+        prompt = "Отправь <b>Время готовки</b> (например: <code>10-18 минут</code>).\nДля удаления отправь <code>-</code>.\nИли /cancel для отмены."
 
     await query.message.edit_text(prompt, parse_mode='HTML', reply_markup=InlineKeyboardMarkup([
         [InlineKeyboardButton("🔙 Отмена", callback_data=f"adm_edit_{cat_id}_{item_idx}")]
@@ -655,6 +668,7 @@ async def admin_add_item_callback(update: Update, context: ContextTypes.DEFAULT_
         'ingredients': '',
         'volume': '',
         'allergens': '',
+        'prep_time': '',
         'is_hit': False
     }
 
@@ -667,6 +681,68 @@ async def admin_add_item_callback(update: Update, context: ContextTypes.DEFAULT_
     )
 
 
+
+async def handle_admin_quiz_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text.strip()
+    if text == '/cancel':
+        context.user_data['awaiting_quiz_add'] = False
+        await update.message.reply_text("❌ Добавление отменена.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 В меню квиза", callback_data="adm_quiz_mgmt")]]))
+        return True
+        
+    step = context.user_data.get('quiz_add_step')
+    new_q = context.user_data.get('quiz_new_q', {})
+    
+    if step == 'QUESTION':
+        new_q['question'] = text
+        context.user_data['quiz_add_step'] = 'OPTIONS'
+        await update.message.reply_text(
+            "Отлично. Теперь отправь <b>4 варианта ответа</b>, каждый с новой строки.\nНапример:\nВариант 1\nВариант 2\nВариант 3\nВариант 4",
+            parse_mode='HTML'
+        )
+    elif step == 'OPTIONS':
+        options = [o.strip() for o in text.split('\n') if o.strip()]
+        if len(options) != 4:
+            await update.message.reply_text("❌ Нужно ровно 4 варианта. Попробуй еще раз.")
+            return True
+        new_q['options'] = options
+        context.user_data['quiz_add_step'] = 'CORRECT'
+        await update.message.reply_text("Какой из них правильный? Отправь <b>цифру от 1 до 4</b>.", parse_mode='HTML')
+    elif step == 'CORRECT':
+        if not text.isdigit() or not (1 <= int(text) <= 4):
+            await update.message.reply_text("❌ Нужно отправить цифру от 1 до 4. Попробуй еще раз.")
+            return True
+        new_q['correct'] = int(text) - 1  # 0-indexed
+        context.user_data['quiz_add_step'] = 'EXPLANATION'
+        await update.message.reply_text("Супер! Теперь напиши объяснение (почему именно этот ответ правильный).", parse_mode='HTML')
+    elif step == 'EXPLANATION':
+        new_q['explanation'] = text
+        quiz_data = load_quiz()
+        max_id = max([q['id'] for q in quiz_data.get('questions', [])], default=0)
+        new_q['id'] = max_id + 1
+        quiz_data.setdefault('questions', []).append(new_q)
+        save_quiz(quiz_data)
+        
+        context.user_data['awaiting_quiz_add'] = False
+        await update.message.reply_text("✅ Вопрос успешно добавлен!", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 В меню квиза", callback_data="adm_quiz_mgmt")]]))
+    return True
+
+async def handle_admin_quiz_cost_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text.strip()
+    if text == '/cancel':
+        context.user_data['awaiting_quiz_cost'] = False
+        await update.message.reply_text("❌ Отменено.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 В меню квиза", callback_data="adm_quiz_mgmt")]]))
+        return True
+        
+    if not text.isdigit():
+        await update.message.reply_text("❌ Введи число (например: 20).")
+        return True
+        
+    save_settings_val('points_for_drink', int(text))
+    context.user_data['awaiting_quiz_cost'] = False
+    await update.message.reply_text(f"✅ Цена награды успешно изменена на {text} баллов!", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 В меню квиза", callback_data="adm_quiz_mgmt")]]))
+    return True
+
+
 async def handle_admin_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обработка текстовых ответов из режимов ожидания."""
     if not is_admin(update.effective_user):
@@ -676,6 +752,14 @@ async def handle_admin_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     photo = update.message.photo[-1] if update.message.photo else None
 
     # ── Добавление администратора ──
+    if context.user_data.get('awaiting_quiz_add'):
+        handled = await handle_admin_quiz_text(update, context)
+        if handled: return
+        
+    if context.user_data.get('awaiting_quiz_cost'):
+        handled = await handle_admin_quiz_cost_text(update, context)
+        if handled: return
+
     if context.user_data.get('awaiting_add_admin'):
         handled = await handle_add_admin_text(update, context)
         if handled:
@@ -790,6 +874,11 @@ async def handle_admin_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text("❌ Нужно отправить текст.")
                 return
             item['allergens'] = "" if text == "-" else text
+        elif field == 'prep':
+            if not text:
+                await update.message.reply_text("❌ Нужно отправить текст.")
+                return
+            item['prep_time'] = "" if text == "-" else text
                 
         save_menu(data)
         await update.message.reply_text(
@@ -1077,6 +1166,160 @@ async def admin_gitpull_callback(update: Update, context: ContextTypes.DEFAULT_T
                 [InlineKeyboardButton("🔙 Назад", callback_data="adm_menu")]
             ])
         )
+
+
+
+def load_quiz():
+    from config import DATA_DIR
+    import os, json
+    path = os.path.join(DATA_DIR, 'quiz.json')
+    if not os.path.exists(path):
+        return {"questions": []}
+    with open(path, 'r', encoding='utf-8') as f:
+        return json.load(f)
+
+def save_quiz(data):
+    from config import DATA_DIR
+    import os, json
+    path = os.path.join(DATA_DIR, 'quiz.json')
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+def save_settings_val(key, val):
+    from config import DATA_DIR
+    import os, json
+    path = os.path.join(DATA_DIR, 'settings.json')
+    data = {}
+    if os.path.exists(path):
+        with open(path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+    data[key] = val
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+async def admin_quiz_mgmt_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer()
+    
+    quiz_data = load_quiz()
+    q_count = len(quiz_data.get('questions', []))
+    from config import get_settings
+    cost = get_settings().get('points_for_drink', 100)
+    
+    text = (
+        f"🎯 <b>Управление квизом и наградами</b>\n\n"
+        f"Вопросов в базе: <b>{q_count}</b>\n"
+        f"Стоимость награды: <b>{cost} баллов</b>\n\n"
+        f"Выбери действие:"
+    )
+    buttons = [
+        [InlineKeyboardButton("➕ Добавить вопрос", callback_data="adm_quiz_add")],
+        [InlineKeyboardButton("📋 Список вопросов", callback_data="adm_quiz_list_0")],
+        [InlineKeyboardButton("⚙️ Изменить цену награды", callback_data="adm_quiz_cost")],
+        [InlineKeyboardButton("🔙 В меню", callback_data="adm_menu")]
+    ]
+    await query.message.edit_text(text, parse_mode='HTML', reply_markup=InlineKeyboardMarkup(buttons))
+
+async def admin_quiz_list_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer()
+    
+    page = int(query.data.replace("adm_quiz_list_", ""))
+    quiz_data = load_quiz()
+    questions = quiz_data.get('questions', [])
+    
+    if not questions:
+        await query.message.edit_text("📭 Вопросов нет.", reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("🔙 Назад", callback_data="adm_quiz_mgmt")]
+        ]))
+        return
+        
+    per_page = 5
+    start = page * per_page
+    end = start + per_page
+    page_items = questions[start:end]
+    
+    text = f"📋 <b>Список вопросов (Стр. {page+1})</b>\n\n"
+    for q in page_items:
+        text += f"<b>{q['id']}.</b> {q['question']}\n"
+    
+    buttons = []
+    for q in page_items:
+        buttons.append([InlineKeyboardButton(f"❌ Удал. {q['id']}", callback_data=f"adm_qdel_{q['id']}_{page}")])
+        
+    nav = []
+    if page > 0:
+        nav.append(InlineKeyboardButton("⬅️", callback_data=f"adm_quiz_list_{page-1}"))
+    if end < len(questions):
+        nav.append(InlineKeyboardButton("➡️", callback_data=f"adm_quiz_list_{page+1}"))
+    if nav:
+        buttons.append(nav)
+    
+    buttons.append([InlineKeyboardButton("🔙 Назад", callback_data="adm_quiz_mgmt")])
+    await query.message.edit_text(text, parse_mode='HTML', reply_markup=InlineKeyboardMarkup(buttons))
+
+async def admin_quiz_del_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer()
+    
+    parts = query.data.split('_')
+    q_id = int(parts[2])
+    page = parts[3]
+    
+    quiz_data = load_quiz()
+    quiz_data['questions'] = [q for q in quiz_data['questions'] if q['id'] != q_id]
+    save_quiz(quiz_data)
+    
+    # Reload list
+    query.data = f"adm_quiz_list_{page}"
+    await admin_quiz_list_callback(update, context)
+
+async def admin_quiz_add_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer()
+    
+    context.user_data['awaiting_quiz_add'] = True
+    context.user_data['quiz_add_step'] = 'QUESTION'
+    context.user_data['quiz_new_q'] = {}
+    
+    await query.message.edit_text(
+        "➕ <b>Добавление вопроса (Шаг 1/4)</b>\n\n"
+        "Отправь текст вопроса.\n\n"
+        "Для отмены отправь /cancel",
+        parse_mode='HTML',
+        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Отмена", callback_data="adm_quiz_mgmt")]])
+    )
+
+async def admin_quiz_cost_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer()
+    
+    context.user_data['awaiting_quiz_cost'] = True
+    
+    await query.message.edit_text(
+        "⚙️ <b>Изменение цены награды</b>\n\n"
+        "Введи новое количество баллов, необходимое для бесплатного напитка (например, 25).\n\n"
+        "Для отмены отправь /cancel",
+        parse_mode='HTML',
+        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Отмена", callback_data="adm_quiz_mgmt")]])
+    )
+
+# End of functions
 
 
 # ─── Управление велком-буком ──────────────────────────────────
@@ -1760,6 +2003,12 @@ def get_handlers():
         CallbackQueryHandler(admin_edit_item_callback, pattern="^adm_edit_"),
         CallbackQueryHandler(admin_edit_field_callback, pattern="^adm_edf_"),
         CallbackQueryHandler(admin_add_item_callback, pattern="^adm_add_"),
+        # ── Управление квизом ──
+        CallbackQueryHandler(admin_quiz_mgmt_callback, pattern="^adm_quiz_mgmt$"),
+        CallbackQueryHandler(admin_quiz_list_callback, pattern="^adm_quiz_list_"),
+        CallbackQueryHandler(admin_quiz_add_callback, pattern="^adm_quiz_add$"),
+        CallbackQueryHandler(admin_quiz_cost_callback, pattern="^adm_quiz_cost$"),
+        CallbackQueryHandler(admin_quiz_del_callback, pattern="^adm_qdel_"),
         # ── Управление велком-буком ──
         CallbackQueryHandler(admin_welcome_mgmt_callback, pattern="^adm_welcome_mgmt$"),
         CallbackQueryHandler(admin_welcome_section_callback, pattern="^adm_wsec_"),
