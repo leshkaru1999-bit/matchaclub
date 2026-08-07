@@ -20,8 +20,11 @@ import json
 def get_settings():
     settings_path = os.path.join(DATA_DIR, 'settings.json')
     if os.path.exists(settings_path):
-        with open(settings_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
+        try:
+            with open(settings_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Error loading settings.json: {e}")
     return {'points_for_drink': 100}
 
 POINTS_CORRECT = 1       # +1 за правильный ответ
