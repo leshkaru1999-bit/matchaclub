@@ -492,7 +492,7 @@ const app = {
             else if (stats.points >= 20) rank = "🌿 Знаток";
             document.getElementById('prof-rank').textContent = rank;
 
-            const POINTS_FOR_DRINK = 20;
+            const POINTS_FOR_DRINK = this.rewardCost || 20;
             const drinksAvailable = Math.floor(stats.points / POINTS_FOR_DRINK);
             const progress = stats.points % POINTS_FOR_DRINK;
             
