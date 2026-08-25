@@ -215,6 +215,6 @@ async def log_attendance(data: AttendanceData):
 
 # ─── Монтируем статику ──────────────────────────────────────────
 os.makedirs(os.path.join(os.path.dirname(__file__), 'static'), exist_ok=True)
-if os.path.exists(PHOTOS_DIR):
-    app.mount("/api/photos", StaticFiles(directory=PHOTOS_DIR), name="photos")
+os.makedirs(PHOTOS_DIR, exist_ok=True)
+app.mount("/api/photos", StaticFiles(directory=PHOTOS_DIR), name="photos")
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
