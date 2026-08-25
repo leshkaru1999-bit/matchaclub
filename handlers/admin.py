@@ -125,7 +125,8 @@ def get_admin_keyboard(user):
             InlineKeyboardButton("🔑 Администраторы", callback_data="adm_admins"),
         ])
         buttons.append([
-            InlineKeyboardButton("🔄 Обновить с сервера", callback_data="adm_gitpull"),
+            InlineKeyboardButton("⚙️ Настройки бота", callback_data="adm_settings"),
+            InlineKeyboardButton("🔄 Обновить код", callback_data="adm_gitpull"),
         ])
     return InlineKeyboardMarkup(buttons)
 
@@ -760,6 +761,26 @@ async def handle_admin_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = update.message.text.strip() if update.message.text else ""
     photo = update.message.photo[-1] if update.message.photo else None
+
+    # ── Настройки ──
+    if context.user_data.get('awaiting_setting'):
+        setting_key = context.user_data.pop('awaiting_setting')
+        if text == '/cancel':
+            await update.message.reply_text("❌ Отменено.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 В настройки", callback_data="adm_settings")]]))
+            return True
+            
+        key_map = {
+            'ptscorr': 'points_correct',
+            'ptswrong': 'points_wrong',
+            'chatid': 'chat_id'
+        }
+        
+        real_key = key_map.get(setting_key)
+        if real_key:
+            val = text if real_key == 'chat_id' else int(text)
+            save_settings_val(real_key, val)
+            await update.message.reply_text(f"✅ Настройка {real_key} сохранена: {val}", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 В настройки", callback_data="adm_settings")]]))
+        return True
 
     # ── Добавление администратора ──
     if context.user_data.get('awaiting_quiz_add'):
@@ -1991,10 +2012,57 @@ async def admin_confirm_remove_admin_callback(update: Update, context: ContextTy
         await query.answer("Пользователь не найден в списке.")
 
 
+async def admin_settings_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    if not is_superadmin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer()
+
+    from config import get_settings
+    s = get_settings()
+    
+    text = (
+        f"⚙️ <b>Настройки бота</b>\n\n"
+        f"🔹 Стоимость напитка: <b>{s.get('points_for_drink', 100)}</b>\n"
+        f"🔹 Балл за верный ответ (квиз): <b>{s.get('points_correct', 1)}</b>\n"
+        f"🔹 Штраф за ошибку (квиз): <b>{s.get('points_wrong', -2)}</b>\n"
+        f"🔹 Кулдаун квиза (часов): <b>{s.get('quiz_cooldown_hours', 24)}</b>\n"
+        f"🔹 Рабочий чат ID: <b>{s.get('chat_id', 'Не задан')}</b>\n\n"
+        f"Что изменить?"
+    )
+    buttons = [
+        [InlineKeyboardButton("Балл за верный ответ", callback_data="adm_set_ptscorr")],
+        [InlineKeyboardButton("Штраф за ошибку", callback_data="adm_set_ptswrong")],
+        [InlineKeyboardButton("Рабочий чат (ID)", callback_data="adm_set_chatid")],
+        [InlineKeyboardButton("🔙 Назад", callback_data="adm_menu")]
+    ]
+    await query.message.edit_text(text, parse_mode='HTML', reply_markup=InlineKeyboardMarkup(buttons))
+
+async def admin_set_setting_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    if not is_superadmin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer()
+    
+    setting_key = query.data.replace('adm_set_', '')
+    context.user_data['awaiting_setting'] = setting_key
+    
+    await query.message.edit_text(
+        f"⚙️ <b>Изменение настройки {setting_key}</b>\n\n"
+        "Введите новое значение текстом (например: <code>-100123456789</code> или <code>2</code>).\n"
+        "Для отмены введите /cancel",
+        parse_mode='HTML',
+        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Назад", callback_data="adm_settings")]])
+    )
+
 def get_handlers():
     return [
         CommandHandler("admin", admin_command),
         CommandHandler("cancel", cancel_command),
+        CallbackQueryHandler(admin_settings_callback, pattern="^adm_settings$"),
+        CallbackQueryHandler(admin_set_setting_callback, pattern="^adm_set_"),
         CallbackQueryHandler(admin_gitpull_callback, pattern="^adm_gitpull$"),
         CallbackQueryHandler(admin_menu_callback, pattern="^adm_menu$"),
         CallbackQueryHandler(admin_stats_callback, pattern="^adm_stats$"),

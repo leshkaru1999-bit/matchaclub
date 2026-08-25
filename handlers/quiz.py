@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CallbackQueryHandler
 import database as db
-from config import DATA_DIR, POINTS_CORRECT, POINTS_WRONG, QUIZ_COOLDOWN_HOURS, QUIZ_QUESTIONS_COUNT
+from config import get_settings
 
 
 def load_quiz():
@@ -25,7 +25,7 @@ async def quiz_start_callback(update: Update, context: ContextTypes.DEFAULT_TYPE
     # Проверяем кулдаун
     last_time = db.get_last_quiz_time(user_id)
     if last_time:
-        cooldown_end = last_time + timedelta(hours=QUIZ_COOLDOWN_HOURS)
+        cooldown_end = last_time + timedelta(hours=get_settings().get('quiz_cooldown_hours', 24))
         if datetime.now() < cooldown_end:
             remaining = cooldown_end - datetime.now()
             hours = int(remaining.total_seconds() // 3600)
@@ -46,7 +46,7 @@ async def quiz_start_callback(update: Update, context: ContextTypes.DEFAULT_TYPE
     data = load_quiz()
     questions = data['questions'][:]
     random.shuffle(questions)
-    questions = questions[:QUIZ_QUESTIONS_COUNT]
+    questions = questions[:get_settings().get('quiz_questions_count', 15)]
 
     # Сохраняем состояние квиза в context.user_data
     context.user_data['quiz'] = {
@@ -60,8 +60,8 @@ async def quiz_start_callback(update: Update, context: ContextTypes.DEFAULT_TYPE
     text = (
         f"🎯 <b>Квиз Matcha Club</b>\n\n"
         f"📋 Вопросов: <b>{len(questions)}</b>\n"
-        f"✅ Правильный ответ: <b>+{POINTS_CORRECT} балл</b>\n"
-        f"❌ Неправильный ответ: <b>{POINTS_WRONG} балла</b>\n"
+        f"✅ Правильный ответ: <b>+{get_settings().get('points_correct', 1)} балл</b>\n"
+        f"❌ Неправильный ответ: <b>{get_settings().get('points_wrong', -2)} балла</b>\n"
         f"🍹 <b>20 баллов</b> = 1 бесплатный напиток\n\n"
         f"Готов? Поехали! 🚀"
     )
@@ -147,12 +147,12 @@ async def quiz_answer_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     if is_correct:
         quiz['score'] += 1
         result_emoji = "✅"
-        result_text = f"Правильно! +{POINTS_CORRECT} балл"
+        result_text = f"Правильно! +{get_settings().get('points_correct', 1)} балл"
     else:
         quiz['wrong'] += 1
         result_emoji = "❌"
         correct_label = ['🅰️', '🅱️', '🅲', '🅳'][q['correct']]
-        result_text = f"Неправильно! {POINTS_WRONG} балла\nПравильный ответ: {correct_label} {q['options'][q['correct']]}"
+        result_text = f"Неправильно! {get_settings().get('points_wrong', -2)} балла\nПравильный ответ: {correct_label} {q['options'][q['correct']]}"
 
     quiz['answers'].append(is_correct)
     quiz['current'] += 1
@@ -181,7 +181,9 @@ async def finish_quiz(message, quiz, user_id):
     wrong = quiz['wrong']
 
     # Подсчёт баллов: +1 за правильный, -2 за неправильный, минимум 0
-    points_earned = max(0, (score * POINTS_CORRECT) + (wrong * POINTS_WRONG))
+    pts_correct = get_settings().get('points_correct', 1)
+    pts_wrong = get_settings().get('points_wrong', -2)
+    points_earned = max(0, (score * pts_correct) + (wrong * pts_wrong))
 
     # Сохраняем в БД
     db.add_quiz_result(user_id, score, total, points_earned)

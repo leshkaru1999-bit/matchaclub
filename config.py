@@ -19,16 +19,19 @@ import json
 
 def get_settings():
     settings_path = os.path.join(DATA_DIR, 'settings.json')
+    defaults = {
+        'points_for_drink': 100,
+        'points_correct': 1,
+        'points_wrong': -2,
+        'quiz_cooldown_hours': 24,
+        'quiz_questions_count': 15,
+        'chat_id': ''
+    }
     if os.path.exists(settings_path):
         try:
             with open(settings_path, 'r', encoding='utf-8') as f:
-                return json.load(f)
+                data = json.load(f)
+                defaults.update(data)
         except Exception as e:
             print(f"Error loading settings.json: {e}")
-    return {'points_for_drink': 100}
-
-POINTS_CORRECT = 1       # +1 за правильный ответ
-POINTS_WRONG = -2        # -2 за неправильный ответ
-# POINTS_FOR_DRINK теперь берется из get_settings()['points_for_drink']
-QUIZ_COOLDOWN_HOURS = 24 # Кулдаун между квизами
-QUIZ_QUESTIONS_COUNT = 15 # Количество вопросов в квизе
+    return defaults

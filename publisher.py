@@ -39,20 +39,20 @@ async def send_random_fact(context: ContextTypes.DEFAULT_TYPE):
     if not fact:
         return
         
-    # Send to all users
-    users = db.get_all_users()
-    for u in users:
+    from config import get_settings
+    settings = get_settings()
+    chat_id = settings.get('chat_id')
+    
+    if chat_id:
         try:
-            await context.bot.send_message(chat_id=u['user_id'], text=fact, parse_mode='HTML')
-        except Exception:
-            pass
+            await context.bot.send_message(chat_id=chat_id, text=fact, parse_mode='HTML')
+        except Exception as e:
+            print(f"Failed to post daily fact to group {chat_id}: {e}")
 
 def setup_jobs(job_queue):
-    # Send 3 times a day: 10:00, 15:00, 20:00
+    # Send once a day at 10:00
     times = [
-        datetime.time(hour=10, minute=0, tzinfo=datetime.timezone(datetime.timedelta(hours=5))), # Yekaterinburg time for example, let's use UTC+5
-        datetime.time(hour=15, minute=0, tzinfo=datetime.timezone(datetime.timedelta(hours=5))),
-        datetime.time(hour=20, minute=0, tzinfo=datetime.timezone(datetime.timedelta(hours=5)))
+        datetime.time(hour=10, minute=0, tzinfo=datetime.timezone(datetime.timedelta(hours=5))) # Yekaterinburg/Tashkent time UTC+5
     ]
     for t in times:
         job_queue.run_daily(send_random_fact, time=t)
