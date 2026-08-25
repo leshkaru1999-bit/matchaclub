@@ -31,8 +31,11 @@ def is_superadmin(user) -> bool:
 
 def load_menu():
     path = os.path.join(DATA_DIR, 'menu.json')
-    with open(path, 'r', encoding='utf-8') as f:
-        return json.load(f)
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {"categories": []}
 
 
 def save_menu(data):
@@ -49,8 +52,11 @@ def save_menu(data):
 
 def load_welcome():
     path = os.path.join(DATA_DIR, 'welcome.json')
-    with open(path, 'r', encoding='utf-8') as f:
-        return json.load(f)
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {"sections": []}
 
 
 def save_welcome(data):
