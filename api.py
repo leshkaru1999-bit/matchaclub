@@ -217,30 +217,16 @@ async def log_attendance(data: AttendanceData):
 async def get_fact():
     import random
     fact = ""
-    # We will pick randomly: 0 - menu fact, 1 - welcome book fact
-    source = random.choice([0, 1])
     
-    if source == 0:
-        menu_path = os.path.join(DATA_DIR, 'menu.json')
-        if os.path.exists(menu_path):
-            with open(menu_path, 'r', encoding='utf-8') as f:
-                menu_data = json.load(f)
-            items = []
-            for c in menu_data.get('categories', []):
-                items.extend(c.get('items', []))
-            if items:
-                item = random.choice(items)
-                fact = f"🍵 <b>Интересный факт о нашем меню!</b><br><br><b>{item.get('name', 'Блюдо')}</b><br>{item.get('description', '')}"
-    
-    if not fact:
-        tour_path = os.path.join(DATA_DIR, 'tour.json')
-        if os.path.exists(tour_path):
-            with open(tour_path, 'r', encoding='utf-8') as f:
-                tour_data = json.load(f)
-            sections = tour_data.get('sections', [])
-            if sections:
-                sec = random.choice(sections)
-                fact = f"✨ <b>А ты знал?</b><br><br><b>{sec.get('title', 'Интересно')}</b><br>{sec.get('text', '')}"
+    facts_path = os.path.join(DATA_DIR, 'facts.json')
+    if os.path.exists(facts_path):
+        with open(facts_path, 'r', encoding='utf-8') as f:
+            facts_data = json.load(f)
+        facts_list = facts_data.get('facts', [])
+        if facts_list:
+            item = random.choice(facts_list)
+            emoji = item.get('emoji', '💡')
+            fact = f"{emoji} <b>Факт дня</b><br><br>{item.get('text', '')}"
                 
     if not fact:
         fact = "Сегодня отличный день для новой чашки матчи!"
