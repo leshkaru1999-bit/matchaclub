@@ -538,6 +538,7 @@ async def admin_edit_item_callback(update: Update, context: ContextTypes.DEFAULT
         f"<b>КБЖУ:</b> {item.get('calories', 0)}/{item.get('protein', 0)}/{item.get('fat', 0)}/{item.get('carbs', 0)}\n"
         f"<b>Аллергены:</b> {item.get('allergens', '—')}\n"
         f"<b>Время готовки:</b> {item.get('prep_time', '—')}\n"
+        f"<b>Аудио-гид:</b> {'Есть 🎙' if item.get('audio') else 'Нет'}\n"
         f"<b>Хит продаж:</b> {'Да 🔥' if item.get('is_hit') else 'Нет'}\n\n"
         f"Выбери, что хочешь изменить:"
     )
@@ -560,7 +561,8 @@ async def admin_edit_item_callback(update: Update, context: ContextTypes.DEFAULT
             InlineKeyboardButton(f"🔥 Хит: {'Да' if item.get('is_hit') else 'Нет'}", callback_data=f"adm_edf_hit_{cat_id}_{item_idx}")
         ],
         [
-            InlineKeyboardButton("⏱ Время готовки", callback_data=f"adm_edf_prep_{cat_id}_{item_idx}")
+            InlineKeyboardButton("⏱ Время готовки", callback_data=f"adm_edf_prep_{cat_id}_{item_idx}"),
+            InlineKeyboardButton("🎙 Аудио-гид", callback_data=f"adm_edf_audio_{cat_id}_{item_idx}")
         ],
         [InlineKeyboardButton("🔙 Назад", callback_data=f"adm_mitem_{cat_id}")]
     ]
@@ -651,6 +653,8 @@ async def admin_edit_field_callback(update: Update, context: ContextTypes.DEFAUL
         prompt = "Отправь список <b>Аллергенов</b> (например: <code>мед, орехи, молоко</code>).\nДля удаления отправь <code>-</code>.\nИли /cancel для отмены."
     elif field == 'prep':
         prompt = "Отправь <b>Время готовки</b> (например: <code>10-18 минут</code>).\nДля удаления отправь <code>-</code>.\nИли /cancel для отмены."
+    elif field == 'audio':
+        prompt = "Отправь <b>Аудио-гид</b> (голосовое сообщение или mp3/ogg файл) для этого блюда.\nДля удаления отправь <code>-</code>.\nИли /cancel для отмены."
 
     await query.message.edit_text(prompt, parse_mode='HTML', reply_markup=InlineKeyboardMarkup([
         [InlineKeyboardButton("🔙 Отмена", callback_data=f"adm_edit_{cat_id}_{item_idx}")]
@@ -910,6 +914,23 @@ async def handle_admin_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text("❌ Нужно отправить текст.")
                 return
             item['prep_time'] = "" if text == "-" else text
+        elif field == 'audio':
+            audio_obj = update.message.voice or update.message.audio
+            if text == "-":
+                item['audio'] = ""
+            elif audio_obj:
+                import uuid
+                from config import AUDIO_DIR
+                os.makedirs(AUDIO_DIR, exist_ok=True)
+                ext = "ogg" if update.message.voice else "mp3" 
+                filename = f"audio_{uuid.uuid4().hex[:8]}.{ext}"
+                audio_path = os.path.join(AUDIO_DIR, filename)
+                new_file = await audio_obj.get_file()
+                await new_file.download_to_drive(custom_path=audio_path)
+                item['audio'] = filename
+            else:
+                await update.message.reply_text("❌ Отправь голосовое сообщение (voice/audio) или ` - ` для удаления.", parse_mode='Markdown')
+                return
                 
         save_menu(data)
         await update.message.reply_text(
@@ -2035,6 +2056,7 @@ async def admin_settings_callback(update: Update, context: ContextTypes.DEFAULT_
         [InlineKeyboardButton("Балл за верный ответ", callback_data="adm_set_ptscorr")],
         [InlineKeyboardButton("Штраф за ошибку", callback_data="adm_set_ptswrong")],
         [InlineKeyboardButton("Рабочий чат (ID)", callback_data="adm_set_chatid")],
+        [InlineKeyboardButton("📢 Тест факта дня", callback_data="adm_test_fact")],
         [InlineKeyboardButton("🔙 Назад", callback_data="adm_menu")]
     ]
     await query.message.edit_text(text, parse_mode='HTML', reply_markup=InlineKeyboardMarkup(buttons))
@@ -2057,12 +2079,24 @@ async def admin_set_setting_callback(update: Update, context: ContextTypes.DEFAU
         reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Назад", callback_data="adm_settings")]])
     )
 
+async def admin_test_fact_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    if not is_superadmin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer("Запускаем тест...")
+    
+    import publisher
+    await publisher.send_random_fact(context)
+    await query.message.reply_text("✅ Рассылка протестирована! Проверь рабочий чат.")
+
 def get_handlers():
     return [
         CommandHandler("admin", admin_command),
         CommandHandler("cancel", cancel_command),
         CallbackQueryHandler(admin_settings_callback, pattern="^adm_settings$"),
         CallbackQueryHandler(admin_set_setting_callback, pattern="^adm_set_"),
+        CallbackQueryHandler(admin_test_fact_callback, pattern="^adm_test_fact$"),
         CallbackQueryHandler(admin_gitpull_callback, pattern="^adm_gitpull$"),
         CallbackQueryHandler(admin_menu_callback, pattern="^adm_menu$"),
         CallbackQueryHandler(admin_stats_callback, pattern="^adm_stats$"),
@@ -2107,7 +2141,7 @@ def get_handlers():
         CallbackQueryHandler(admin_set_role_callback, pattern="^adm_setrole_"),
         CallbackQueryHandler(admin_confirm_remove_admin_callback, pattern="^adm_rmadm_ok_"),
         CallbackQueryHandler(admin_remove_admin_callback, pattern="^adm_rmadm_"),
-        # Текстовые ответы и фото (должен быть последним!)
-        MessageHandler((filters.TEXT | filters.PHOTO) & ~filters.COMMAND, handle_admin_text),
+        # Текстовые ответы и фото и аудио (должен быть последним!)
+        MessageHandler((filters.TEXT | filters.PHOTO | filters.VOICE | filters.AUDIO) & ~filters.COMMAND, handle_admin_text),
     ]
 

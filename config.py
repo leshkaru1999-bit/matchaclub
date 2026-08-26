@@ -12,6 +12,7 @@ WEBAPP_URL = os.getenv('WEBAPP_URL', 'https://example.loca.lt')
 # Пути к данным
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 PHOTOS_DIR = os.path.join(DATA_DIR, 'photos')
+AUDIO_DIR = os.path.join(DATA_DIR, 'audio')
 DB_PATH = os.path.join(os.path.dirname(__file__), 'matcha_club.db')
 
 # Система баллов

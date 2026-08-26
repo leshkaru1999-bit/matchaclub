@@ -122,11 +122,14 @@ const app = {
     async showFact() {
         tg.HapticFeedback.impactOccurred('medium');
         try {
-            const res = await fetch(`${API_BASE}/api/facts/random`);
-            const fact = await res.json();
+            const res = await fetch(`${API_BASE}/api/fact`);
+            const data = await res.json();
+            // Convert HTML to plain text for Telegram popup
+            let text = data.fact_html.replace(/<br\s*[\/]?>/gi, '\n');
+            text = text.replace(/<[^>]*>?/gm, '');
             tg.showPopup({
-                title: `${fact.emoji} Факт дня`,
-                message: fact.text,
+                title: `💡 Факт дня`,
+                message: text,
                 buttons: [{type: "ok"}]
             });
         } catch (e) {
@@ -351,6 +354,16 @@ const app = {
             
             if (item.prep_time) {
                 html += `<p class="menu-item-prep" style="font-size: 13px; color: #888; margin-bottom: 5px;">⏱ <b>Время готовки:</b> ${item.prep_time}</p>`;
+            }
+            
+            if (item.audio) {
+                html += `<div style="margin-top: 10px; margin-bottom: 10px;">
+                    <p style="font-size: 12px; color: #666; margin-bottom: 5px; font-weight: 500;">🎙 Скрипт продаж:</p>
+                    <audio controls style="width: 100%; height: 35px; border-radius: 8px;">
+                        <source src="${API_BASE}/api/audio/${item.audio}" type="audio/mpeg">
+                        <source src="${API_BASE}/api/audio/${item.audio}" type="audio/ogg">
+                    </audio>
+                </div>`;
             }
             
             if (item.calories) {

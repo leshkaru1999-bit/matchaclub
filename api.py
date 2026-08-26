@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import database as db
-from config import DATA_DIR, PHOTOS_DIR
+from config import DATA_DIR, PHOTOS_DIR, AUDIO_DIR
 
 app = FastAPI(title="Matcha Club Mini App API")
 
@@ -213,8 +213,44 @@ async def log_attendance(data: AttendanceData):
     return {"status": "ok"}
 
 
+@app.get("/api/fact")
+async def get_fact():
+    import random
+    fact = ""
+    # We will pick randomly: 0 - menu fact, 1 - welcome book fact
+    source = random.choice([0, 1])
+    
+    if source == 0:
+        menu_path = os.path.join(DATA_DIR, 'menu.json')
+        if os.path.exists(menu_path):
+            with open(menu_path, 'r', encoding='utf-8') as f:
+                menu_data = json.load(f)
+            items = []
+            for c in menu_data.get('categories', []):
+                items.extend(c.get('items', []))
+            if items:
+                item = random.choice(items)
+                fact = f"🍵 <b>Интересный факт о нашем меню!</b><br><br><b>{item.get('name', 'Блюдо')}</b><br>{item.get('description', '')}"
+    
+    if not fact:
+        tour_path = os.path.join(DATA_DIR, 'tour.json')
+        if os.path.exists(tour_path):
+            with open(tour_path, 'r', encoding='utf-8') as f:
+                tour_data = json.load(f)
+            sections = tour_data.get('sections', [])
+            if sections:
+                sec = random.choice(sections)
+                fact = f"✨ <b>А ты знал?</b><br><br><b>{sec.get('title', 'Интересно')}</b><br>{sec.get('text', '')}"
+                
+    if not fact:
+        fact = "Сегодня отличный день для новой чашки матчи!"
+        
+    return {"fact_html": fact}
+
 # ─── Монтируем статику ──────────────────────────────────────────
 os.makedirs(os.path.join(os.path.dirname(__file__), 'static'), exist_ok=True)
 os.makedirs(PHOTOS_DIR, exist_ok=True)
+os.makedirs(AUDIO_DIR, exist_ok=True)
 app.mount("/api/photos", StaticFiles(directory=PHOTOS_DIR), name="photos")
+app.mount("/api/audio", StaticFiles(directory=AUDIO_DIR), name="audio")
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
