@@ -762,6 +762,10 @@ async def handle_admin_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обработка текстовых ответов из режимов ожидания."""
     if not is_admin(update.effective_user):
         return
+    
+    # Игнорируем сообщения из групп (например, если админ просто пишет в рабочий чат)
+    if update.message.chat.type != 'private':
+        return
 
     text = update.message.text.strip() if update.message.text else ""
     photo = update.message.photo[-1] if update.message.photo else None
