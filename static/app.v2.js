@@ -350,8 +350,16 @@ const app = {
             html += `<div class="menu-item-info">
                 <h3>${item.name} ${titleHit}</h3>`;
                 
-            if (item.description) html += `<p class="menu-item-desc">${item.description}</p>`;
-            
+            if (item.description) {
+                // В тексте описания иногда задублирован состав без иконки
+                // (например "...\n\nСостав: Ингредиенты: ..."), а ниже он же
+                // выводится отдельно с иконкой 🥗 из поля ingredients — обрезаем дубль.
+                let desc = item.description;
+                const dupIdx = desc.search(/\n*\s*Состав\s*:/i);
+                if (dupIdx !== -1) desc = desc.slice(0, dupIdx).trim();
+                if (desc) html += `<p class="menu-item-desc">${desc}</p>`;
+            }
+
             if (item.ingredients) {
                 html += `<p class="menu-item-ingredients" style="font-size: 13px; color: #555; margin-bottom: 5px;">🥗 <b>Состав:</b> ${item.ingredients}</p>`;
             }
