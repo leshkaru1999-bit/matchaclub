@@ -11,7 +11,9 @@ def load_facts():
     """Загрузить факты."""
     path = os.path.join(DATA_DIR, 'facts.json')
     with open(path, 'r', encoding='utf-8') as f:
-        return json.load(f)
+        data = json.load(f)
+    # facts.json может быть списком фактов или {"facts": [...]}
+    return data if isinstance(data, list) else data.get('facts', [])
 
 
 CATEGORY_NAMES = {
@@ -28,8 +30,8 @@ async def random_fact_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     query = update.callback_query
     await query.answer()
 
-    data = load_facts()
-    fact = random.choice(data['facts'])
+    facts_list = load_facts()
+    fact = random.choice(facts_list)
 
     cat_name = CATEGORY_NAMES.get(fact['category'], fact['category'])
 

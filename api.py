@@ -95,6 +95,13 @@ def load_json(filename):
     return {}
 
 
+def extract_facts_list(data):
+    """facts.json может быть списком фактов или {"facts": [...]}."""
+    if isinstance(data, list):
+        return data
+    return data.get('facts', [])
+
+
 def save_json(filename, data):
     path = os.path.join(DATA_DIR, filename)
     with open(path, 'w', encoding='utf-8') as f:
@@ -142,8 +149,9 @@ async def get_welcome():
 @app.get("/api/facts/random")
 async def get_random_fact():
     data = load_json('facts.json')
-    if 'facts' in data and data['facts']:
-        return random.choice(data['facts'])
+    facts_list = extract_facts_list(data)
+    if facts_list:
+        return random.choice(facts_list)
     return {"text": "Факты не найдены"}
 
 
@@ -223,7 +231,7 @@ async def get_fact():
         try:
             with open(facts_path, 'r', encoding='utf-8') as f:
                 facts_data = json.load(f)
-            facts_list = facts_data.get('facts', [])
+            facts_list = extract_facts_list(facts_data)
             if facts_list:
                 item = random.choice(facts_list)
                 emoji = item.get('emoji', '💡')

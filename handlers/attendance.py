@@ -4,13 +4,13 @@ from telegram.ext import ContextTypes, CommandHandler
 
 async def staff_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Отправляет кнопку для открытия Mini App."""
-    from config import MINI_APP_URL
-    if not MINI_APP_URL:
+    from config import WEBAPP_URL
+    if not WEBAPP_URL:
         await update.message.reply_text("Mini App URL не настроен.")
         return
-        
+
     keyboard = [
-        [InlineKeyboardButton("📱 Открыть приложение", web_app={"url": MINI_APP_URL})]
+        [InlineKeyboardButton("📱 Открыть приложение", web_app={"url": WEBAPP_URL})]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     

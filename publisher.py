@@ -13,7 +13,7 @@ async def send_random_fact(context: ContextTypes.DEFAULT_TYPE):
         try:
             with open(facts_path, 'r', encoding='utf-8') as f:
                 facts_data = json.load(f)
-            facts_list = facts_data.get('facts', [])
+            facts_list = facts_data if isinstance(facts_data, list) else facts_data.get('facts', [])
             if facts_list:
                 item = random.choice(facts_list)
                 emoji = item.get('emoji', '💡')

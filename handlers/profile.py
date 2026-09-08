@@ -74,12 +74,13 @@ async def request_reward_callback(update: Update, context: ContextTypes.DEFAULT_
 
     user = update.effective_user
     stats = db.get_user_stats(user.id)
+    cost = get_settings().get('points_for_drink', 100)
 
-    if not stats or stats['points'] < POINTS_FOR_DRINK:
+    if not stats or stats['points'] < cost:
         await query.message.edit_text(
             f"❌ Недостаточно баллов!\n\n"
             f"У тебя: {stats['points'] if stats else 0} баллов\n"
-            f"Нужно: {POINTS_FOR_DRINK} баллов",
+            f"Нужно: {cost} баллов",
             parse_mode='HTML',
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("🔙 Профиль", callback_data="profile")]
@@ -89,10 +90,10 @@ async def request_reward_callback(update: Update, context: ContextTypes.DEFAULT_
 
     text = (
         f"🍹 <b>Обмен баллов на напиток</b>\n\n"
-        f"Ты хочешь потратить <b>{POINTS_FOR_DRINK} баллов</b>\n"
+        f"Ты хочешь потратить <b>{cost} баллов</b>\n"
         f"и получить <b>1 бесплатный напиток</b>?\n\n"
         f"💎 Текущий баланс: {stats['points']} баллов\n"
-        f"💎 После обмена: {stats['points'] - POINTS_FOR_DRINK} баллов\n\n"
+        f"💎 После обмена: {stats['points'] - cost} баллов\n\n"
         f"⚠️ Запрос будет отправлен администратору для подтверждения."
     )
 
@@ -113,18 +114,19 @@ async def confirm_reward_callback(update: Update, context: ContextTypes.DEFAULT_
 
     user = update.effective_user
     stats = db.get_user_stats(user.id)
+    cost = get_settings().get('points_for_drink', 100)
 
-    if not stats or stats['points'] < POINTS_FOR_DRINK:
+    if not stats or stats['points'] < cost:
         await query.message.edit_text("❌ Недостаточно баллов!")
         return
 
-    reward_id = db.create_reward_request(user.id, POINTS_FOR_DRINK)
+    reward_id = db.create_reward_request(user.id, cost)
 
     text = (
         f"✅ <b>Запрос отправлен!</b>\n\n"
         f"🎫 Номер запроса: #{reward_id}\n"
         f"🍹 Награда: 1 бесплатный напиток\n"
-        f"💎 Списано: {POINTS_FOR_DRINK} баллов\n\n"
+        f"💎 Списано: {cost} баллов\n\n"
         f"Администратор подтвердит твою награду.\n"
         f"Покажи этот номер официанту! 🙌"
     )
@@ -138,7 +140,7 @@ async def confirm_reward_callback(update: Update, context: ContextTypes.DEFAULT_
                 f"👤 {user.first_name} (@{user.username})\n"
                 f"🎫 Запрос #{reward_id}\n"
                 f"🍹 1 бесплатный напиток\n"
-                f"💎 {POINTS_FOR_DRINK} баллов"
+                f"💎 {cost} баллов"
             )
             await context.bot.send_message(
                 ADMIN_ID, admin_text, parse_mode='HTML',
