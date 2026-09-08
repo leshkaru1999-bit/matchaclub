@@ -7,7 +7,11 @@ const app = {
     user: null,
     menuData: null,
     quizData: null,
-    
+
+    authHeaders() {
+        return { 'X-Telegram-Init-Data': tg.initData || '' };
+    },
+
     init() {
         const initDataUnsafe = tg.initDataUnsafe;
         const user = initDataUnsafe.user || {
@@ -39,7 +43,7 @@ const app = {
         try {
             const res = await fetch(`${API_BASE}/api/init_user`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', ...this.authHeaders() },
                 body: JSON.stringify(user)
             });
             const data = await res.json();
@@ -171,7 +175,7 @@ const app = {
                 try {
                     const res = await fetch(`${API_BASE}/api/attendance`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', ...this.authHeaders() },
                         body: JSON.stringify({
                             user_id: this.user.id,
                             first_name: this.user.first_name,
@@ -442,7 +446,7 @@ const app = {
         document.getElementById('prof-name').textContent = this.user.first_name;
         
         try {
-            const res = await fetch(`${API_BASE}/api/profile/${this.user.id}`);
+            const res = await fetch(`${API_BASE}/api/profile/${this.user.id}`, { headers: this.authHeaders() });
             const data = await res.json();
             const stats = data.stats || data;
             this.user.stats = stats;
@@ -487,7 +491,7 @@ const app = {
                 try {
                     const res = await fetch(`${API_BASE}/api/reward/request`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', ...this.authHeaders() },
                         body: JSON.stringify({ user_id: this.user.id })
                     });
                     if (res.ok) {
@@ -632,6 +636,7 @@ const app = {
             currentIdx: 0,
             correct: 0,
             wrong: 0,
+            answers: [],
             totalSeen,
             totalAll
         };
@@ -657,14 +662,16 @@ const app = {
             const btn = document.createElement('button');
             btn.className = 'option-btn';
             btn.textContent = opt;
-            btn.onclick = () => this.handleAnswer(btn, idx, q.correct, q.explanation);
+            btn.onclick = () => this.handleAnswer(btn, idx, q.correct, q.explanation, q.id);
             optsContainer.appendChild(btn);
         });
     },
 
-    handleAnswer(btn, selectedIdx, correctIdx, explanation) {
+    handleAnswer(btn, selectedIdx, correctIdx, explanation, questionId) {
         const buttons = document.querySelectorAll('.option-btn');
         buttons.forEach(b => b.disabled = true);
+
+        this.quizState.answers.push({ id: questionId, selected: selectedIdx });
 
         if (selectedIdx === correctIdx) {
             tg.HapticFeedback.notificationOccurred('success');
@@ -725,17 +732,25 @@ const app = {
         try {
             const res = await fetch(`${API_BASE}/api/quiz/submit`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', ...this.authHeaders() },
                 body: JSON.stringify({
                     user_id: this.user.id,
-                    correct_answers: this.quizState.correct,
-                    wrong_answers: this.quizState.wrong,
-                    points_earned: earned
+                    answers: this.quizState.answers
                 })
             });
             const data = await res.json();
             this.user.stats = data.new_stats;
             document.getElementById('points-val').textContent = data.new_stats.points;
+            // Баллы и счёт начисляет сервер — обновляем экран результата актуальными цифрами
+            if (typeof data.points_earned === 'number') {
+                document.getElementById('quiz-res-points').textContent = data.points_earned;
+            }
+            if (typeof data.correct_answers === 'number') {
+                document.getElementById('quiz-res-correct').textContent = data.correct_answers;
+            }
+            if (typeof data.wrong_answers === 'number') {
+                document.getElementById('quiz-res-wrong').textContent = data.wrong_answers;
+            }
         } catch (e) {}
     }
 };

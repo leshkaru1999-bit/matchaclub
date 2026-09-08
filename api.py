@@ -1,8 +1,12 @@
 import os
 import json
 import random
+import time
+import hmac
+import hashlib
+from urllib.parse import parse_qsl
 import httpx
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Header, Depends
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -34,6 +38,53 @@ class NoCacheMiddleware(BaseHTTPMiddleware):
         return response
 
 app.add_middleware(NoCacheMiddleware)
+
+# ─── Проверка подписи Telegram initData ─────────────────────────
+def verify_init_data(init_data: str, max_age_seconds: int = 86400) -> dict:
+    """Проверяет HMAC-подпись initData от Telegram WebApp и возвращает данные пользователя.
+
+    Алгоритм: https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app
+    """
+    from config import BOT_TOKEN
+    if not init_data:
+        raise HTTPException(status_code=401, detail="Отсутствует initData")
+
+    try:
+        parsed = dict(parse_qsl(init_data, strict_parsing=True))
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Некорректный initData")
+
+    received_hash = parsed.pop('hash', None)
+    if not received_hash:
+        raise HTTPException(status_code=401, detail="initData без подписи")
+
+    data_check_string = '\n'.join(f"{k}={v}" for k, v in sorted(parsed.items()))
+    secret_key = hmac.new(b"WebAppData", BOT_TOKEN.encode(), hashlib.sha256).digest()
+    calculated_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
+
+    if not hmac.compare_digest(calculated_hash, received_hash):
+        raise HTTPException(status_code=401, detail="Неверная подпись initData")
+
+    auth_date = int(parsed.get('auth_date', 0))
+    if time.time() - auth_date > max_age_seconds:
+        raise HTTPException(status_code=401, detail="initData устарела, откройте приложение заново")
+
+    user_json = parsed.get('user')
+    if not user_json:
+        raise HTTPException(status_code=401, detail="initData без данных пользователя")
+
+    return json.loads(user_json)
+
+
+async def get_verified_user(x_telegram_init_data: str = Header(None, alias="X-Telegram-Init-Data")) -> dict:
+    return verify_init_data(x_telegram_init_data)
+
+
+def ensure_owner(verified_user: dict, user_id: int):
+    """Убеждаемся, что запрос сделан от лица владельца user_id, а не подделан."""
+    if verified_user.get('id') != user_id:
+        raise HTTPException(status_code=403, detail="user_id не совпадает с авторизованным пользователем")
+
 
 # Актуальный маппинг блюд → файлы фото
 PHOTO_MAP = {
@@ -69,11 +120,13 @@ class UserInit(BaseModel):
     first_name: str
     username: str | None = None
 
+class QuizAnswer(BaseModel):
+    id: int
+    selected: int
+
 class QuizSubmit(BaseModel):
     user_id: int
-    correct_answers: int
-    wrong_answers: int
-    points_earned: int
+    answers: list[QuizAnswer]
 
 class RewardRequest(BaseModel):
     user_id: int
@@ -109,7 +162,8 @@ def save_json(filename, data):
 
 
 @app.post("/api/init_user")
-async def init_user(user: UserInit):
+async def init_user(user: UserInit, verified_user: dict = Depends(get_verified_user)):
+    ensure_owner(verified_user, user.id)
     from config import get_settings
     db.get_or_create_user(user.id, user.username or "", user.first_name)
     stats = db.get_user_stats(user.id)
@@ -118,7 +172,8 @@ async def init_user(user: UserInit):
 
 
 @app.get("/api/profile/{user_id}")
-async def get_profile(user_id: int):
+async def get_profile(user_id: int, verified_user: dict = Depends(get_verified_user)):
+    ensure_owner(verified_user, user_id)
     from config import get_settings
     stats = db.get_user_stats(user_id)
     if not stats:
@@ -166,15 +221,42 @@ async def get_tour():
 
 
 @app.post("/api/quiz/submit")
-async def submit_quiz(data: QuizSubmit):
-    points_change = data.points_earned
-    if points_change != 0:
-        db.update_user_points(data.user_id, points_change)
-    total = data.correct_answers + data.wrong_answers
-    score_percentage = 100 if data.wrong_answers == 0 else int(
-        (data.correct_answers / total) * 100) if total > 0 else 0
-    db.add_quiz_result(data.user_id, score_percentage, total, data.points_earned)
-    return {"status": "ok", "new_stats": db.get_user_stats(data.user_id)}
+async def submit_quiz(data: QuizSubmit, verified_user: dict = Depends(get_verified_user)):
+    ensure_owner(verified_user, data.user_id)
+    from config import get_settings
+    settings = get_settings()
+    pts_correct = settings.get('points_correct', 1)
+    pts_wrong = settings.get('points_wrong', -2)
+
+    quiz_data = load_json('quiz.json')
+    questions_by_id = {q['id']: q for q in quiz_data.get('questions', [])}
+
+    correct_answers = 0
+    wrong_answers = 0
+    for ans in data.answers:
+        q = questions_by_id.get(ans.id)
+        if not q:
+            continue
+        if ans.selected == q.get('correct'):
+            correct_answers += 1
+        else:
+            wrong_answers += 1
+
+    total = correct_answers + wrong_answers
+    points_earned = max(0, (correct_answers * pts_correct) + (wrong_answers * pts_wrong))
+    score_percentage = 100 if wrong_answers == 0 else int(
+        (correct_answers / total) * 100) if total > 0 else 0
+
+    if points_earned != 0:
+        db.update_user_points(data.user_id, points_earned)
+    db.add_quiz_result(data.user_id, score_percentage, total, points_earned)
+    return {
+        "status": "ok",
+        "new_stats": db.get_user_stats(data.user_id),
+        "correct_answers": correct_answers,
+        "wrong_answers": wrong_answers,
+        "points_earned": points_earned,
+    }
 
 
 @app.get("/api/leaderboard")
@@ -184,7 +266,8 @@ async def get_leaderboard():
 
 
 @app.post("/api/reward/request")
-async def request_reward(req: RewardRequest):
+async def request_reward(req: RewardRequest, verified_user: dict = Depends(get_verified_user)):
+    ensure_owner(verified_user, req.user_id)
     from config import get_settings
     cost = get_settings().get('points_for_drink', 100)
     stats = db.get_user_stats(req.user_id)
@@ -195,7 +278,8 @@ async def request_reward(req: RewardRequest):
 
 
 @app.post("/api/attendance")
-async def log_attendance(data: AttendanceData):
+async def log_attendance(data: AttendanceData, verified_user: dict = Depends(get_verified_user)):
+    ensure_owner(verified_user, data.user_id)
     from config import BOT_TOKEN, ADMIN_ID
     # Записываем в БД
     db.log_attendance(data.user_id, data.latitude, data.longitude, data.action)
