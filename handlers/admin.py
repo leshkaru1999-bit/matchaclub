@@ -2,6 +2,7 @@
 import subprocess
 import json
 import os
+import re
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 import database as db
@@ -782,10 +783,30 @@ async def handle_admin_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
             'ptswrong': 'points_wrong',
             'chatid': 'chat_id'
         }
-        
+
         real_key = key_map.get(setting_key)
         if real_key:
-            val = text if real_key == 'chat_id' else int(text)
+            if real_key == 'chat_id':
+                # ID группы/канала — число (обычно отрицательное, у супергрупп с -100…)
+                # либо @username публичного канала/группы. Отклоняем любой другой текст,
+                # чтобы случайное сообщение не затёрло рабочий chat_id (как уже было).
+                candidate = text
+                is_valid = bool(re.fullmatch(r'-?\d+', candidate)) or bool(re.fullmatch(r'@[A-Za-z0-9_]{5,32}', candidate))
+                if not is_valid:
+                    context.user_data['awaiting_setting'] = setting_key
+                    await update.message.reply_text(
+                        "❌ Это не похоже на ID чата. Нужно число (например: -1001234567890) "
+                        "или @username канала/группы.\n\nПришли корректный ID или /cancel.",
+                    )
+                    return True
+                val = candidate
+            else:
+                try:
+                    val = int(text)
+                except ValueError:
+                    context.user_data['awaiting_setting'] = setting_key
+                    await update.message.reply_text("❌ Нужно отправить число. Попробуй ещё раз или /cancel.")
+                    return True
             save_settings_val(real_key, val)
             await update.message.reply_text(f"✅ Настройка {real_key} сохранена: {val}", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 В настройки", callback_data="adm_settings")]]))
         return True
