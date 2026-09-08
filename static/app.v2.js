@@ -348,6 +348,10 @@ const app = {
                 
             if (item.description) html += `<p class="menu-item-desc">${item.description}</p>`;
             
+            if (item.ingredients) {
+                html += `<p class="menu-item-ingredients" style="font-size: 13px; color: #555; margin-bottom: 5px;">🥗 <b>Состав:</b> ${item.ingredients}</p>`;
+            }
+            
             if (item.allergens) {
                 html += `<p class="menu-item-allergens">⚠️ <b>Аллергены:</b> ${item.allergens}</p>`;
             }

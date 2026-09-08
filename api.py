@@ -220,13 +220,16 @@ async def get_fact():
     
     facts_path = os.path.join(DATA_DIR, 'facts.json')
     if os.path.exists(facts_path):
-        with open(facts_path, 'r', encoding='utf-8') as f:
-            facts_data = json.load(f)
-        facts_list = facts_data.get('facts', [])
-        if facts_list:
-            item = random.choice(facts_list)
-            emoji = item.get('emoji', '💡')
-            fact = f"{emoji} <b>Факт дня</b><br><br>{item.get('text', '')}"
+        try:
+            with open(facts_path, 'r', encoding='utf-8') as f:
+                facts_data = json.load(f)
+            facts_list = facts_data.get('facts', [])
+            if facts_list:
+                item = random.choice(facts_list)
+                emoji = item.get('emoji', '💡')
+                fact = f"{emoji} <b>Факт дня</b><br><br>{item.get('text', '')}"
+        except Exception as e:
+            print(f"Error loading facts.json: {e}")
                 
     if not fact:
         fact = "Сегодня отличный день для новой чашки матчи!"
