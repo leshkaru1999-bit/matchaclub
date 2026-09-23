@@ -114,6 +114,7 @@ const app = {
                 if (page === 'profile') this.loadProfile();
                 if (page === 'quiz') this.initQuizPage();
                 if (page === 'tour') await this.loadTour();
+                if (page === 'trainings') await this.loadTrainings();
 
                 // Плавное появление нового
                 main.style.opacity = '1';
@@ -448,6 +449,142 @@ const app = {
                 container.innerHTML = '<p style="text-align:center; color:red;">Ошибка загрузки видео</p>';
             }
         }
+    },
+
+    // ─── Тренинги ───────────────────────────────────────────
+    async loadTrainings() {
+        const container = document.getElementById('trainings-list');
+        if (!container) return;
+        try {
+            if (!this.trainingsData) {
+                const res = await fetch(`${API_BASE}/api/trainings`);
+                this.trainingsData = await res.json();
+            }
+            const trainings = this.trainingsData.trainings || [];
+            container.innerHTML = '';
+
+            if (trainings.length === 0) {
+                container.innerHTML = '<p style="text-align:center;color:var(--light-text)">Тренинги пока не добавлены</p>';
+                return;
+            }
+
+            trainings.forEach(training => {
+                const card = document.createElement('div');
+                card.className = 'training-card premium-card';
+                const modCount = (training.modules || []).length;
+                card.innerHTML = `
+                    <div class="training-card-icon">${training.emoji || '🎓'}</div>
+                    <div class="training-card-text">
+                        <h3>${training.title}</h3>
+                        <p>${training.subtitle || ''}</p>
+                        <span class="training-card-meta">${modCount} ${this.pluralModules(modCount)}</span>
+                    </div>
+                    <span class="training-arrow">›</span>
+                `;
+                card.onclick = () => {
+                    tg.HapticFeedback.impactOccurred('light');
+                    this.openTraining(training);
+                };
+                container.appendChild(card);
+            });
+        } catch (e) {
+            console.error('Ошибка загрузки тренингов:', e);
+            container.innerHTML = '<p style="text-align:center;color:red;">Ошибка загрузки тренингов</p>';
+        }
+    },
+
+    pluralModules(n) {
+        const mod10 = n % 10, mod100 = n % 100;
+        if (mod10 === 1 && mod100 !== 11) return 'модуль';
+        if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) return 'модуля';
+        return 'модулей';
+    },
+
+    openTraining(training) {
+        const main = document.getElementById('main-content');
+        const tpl = document.getElementById('tpl-training-view');
+        main.style.opacity = '0';
+        setTimeout(() => {
+            main.innerHTML = '';
+            main.appendChild(tpl.content.cloneNode(true));
+
+            this.trainingState = { training, idx: 0 };
+
+            document.getElementById('training-back-btn').onclick = () => {
+                this.navigate('trainings');
+            };
+            document.getElementById('training-prev-btn').onclick = () => {
+                tg.HapticFeedback.impactOccurred('light');
+                this.trainingState.idx--;
+                this.renderTrainingModule();
+            };
+            document.getElementById('training-next-btn').onclick = () => {
+                tg.HapticFeedback.impactOccurred('light');
+                const { training, idx } = this.trainingState;
+                if (idx >= training.modules.length - 1) {
+                    this.finishTraining();
+                } else {
+                    this.trainingState.idx++;
+                    this.renderTrainingModule();
+                }
+            };
+
+            this.renderTrainingModule();
+
+            main.style.opacity = '1';
+            main.style.transition = 'opacity 0.2s ease';
+        }, 150);
+    },
+
+    renderTrainingModule() {
+        const { training, idx } = this.trainingState;
+        const modules = training.modules || [];
+        const module = modules[idx];
+        if (!module) return;
+
+        document.getElementById('training-progress-pill').textContent = `Модуль ${idx + 1}/${modules.length}`;
+        document.getElementById('module-title').textContent = module.title;
+
+        const bodyEl = document.getElementById('module-body');
+        bodyEl.style.opacity = '0';
+        bodyEl.innerHTML = module.content || '';
+        setTimeout(() => { bodyEl.style.opacity = '1'; }, 50);
+        bodyEl.style.transition = 'opacity 0.25s ease';
+
+        // Точки прогресса
+        const dotsEl = document.getElementById('training-dots');
+        dotsEl.innerHTML = '';
+        modules.forEach((m, i) => {
+            const dot = document.createElement('div');
+            dot.className = 'training-dot' + (i < idx ? ' done' : i === idx ? ' active' : '');
+            dotsEl.appendChild(dot);
+        });
+
+        document.getElementById('training-prev-btn').classList.toggle('hidden', idx === 0);
+        document.getElementById('training-next-btn').textContent =
+            idx >= modules.length - 1 ? '✅ Завершить тренинг' : 'Дальше →';
+
+        document.getElementById('main-content').scrollTo({ top: 0 });
+    },
+
+    finishTraining() {
+        const { training } = this.trainingState;
+        tg.HapticFeedback.notificationOccurred('success');
+        tg.showPopup({
+            title: '🎉 Тренинг пройден!',
+            message: `Ты изучил(а) все модули тренинга «${training.title}». Применяй новые приёмы уже на следующей смене!`,
+            buttons: [{ type: 'ok', text: 'Отлично' }]
+        }, () => {
+            this.navigate('trainings');
+        });
+    },
+
+    // Показать/скрыть скрытый ответ в карточке упражнения (вызывается из HTML контента модуля)
+    toggleReveal(btn) {
+        const answer = btn.nextElementSibling;
+        if (!answer) return;
+        const shown = answer.classList.toggle('shown');
+        btn.textContent = shown ? 'Скрыть ответ' : btn.dataset.label || 'Показать ответ';
     },
 
     async loadProfile() {

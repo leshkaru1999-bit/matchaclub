@@ -220,6 +220,11 @@ async def get_tour():
     return load_json('tour.json')
 
 
+@app.get("/api/trainings")
+async def get_trainings():
+    return load_json('trainings.json')
+
+
 @app.post("/api/quiz/submit")
 async def submit_quiz(data: QuizSubmit, verified_user: dict = Depends(get_verified_user)):
     ensure_owner(verified_user, data.user_id)

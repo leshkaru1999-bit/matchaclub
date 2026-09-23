@@ -720,3 +720,161 @@ main {
     border-radius: 6px;
 }
 
+/* ─── Trainings ─── */
+.trainings-page, .training-view-page {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-bottom: 20px;
+}
+.trainings-hero {
+    text-align: center;
+    padding: 24px 16px;
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(69, 76, 127, 0.1) 100%);
+    border-radius: 20px;
+    margin-bottom: 4px;
+}
+.trainings-hero-icon { font-size: 48px; margin-bottom: 12px; }
+.trainings-hero h2 { font-size: 22px; margin-bottom: 8px; }
+.trainings-hero p { font-size: 14px; color: var(--tg-theme-hint-color); line-height: 1.4; }
+
+.trainings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.training-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+.training-card:active { transform: scale(0.98); }
+.training-card-icon {
+    font-size: 30px;
+    min-width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(168, 85, 247, 0.12);
+    border-radius: 12px;
+}
+.training-card-text h3 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.training-card-text p { font-size: 12.5px; color: var(--light-text); line-height: 1.4; }
+.training-card-meta {
+    font-size: 11px;
+    color: var(--light-text);
+    margin-top: 6px;
+    display: inline-block;
+    background: rgba(69, 76, 127, 0.08);
+    padding: 2px 8px;
+    border-radius: 8px;
+}
+.training-arrow { margin-left: auto; font-size: 22px; color: var(--light-text); opacity: 0.6; }
+
+/* Module viewer */
+.training-view-header { display: flex; flex-direction: column; gap: 10px; }
+.training-progress-pill {
+    align-self: flex-start;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    background: var(--card-bg);
+    padding: 6px 14px;
+    border-radius: 20px;
+    box-shadow: var(--shadow-soft);
+}
+.training-dots { display: flex; gap: 6px; margin-bottom: 4px; }
+.training-dot {
+    flex: 1;
+    height: 5px;
+    border-radius: 3px;
+    background: rgba(69, 76, 127, 0.12);
+    transition: background 0.3s ease;
+}
+.training-dot.done { background: linear-gradient(90deg, #454C7F, #6c73ad); }
+.training-dot.active { background: #a855f7; }
+
+.module-card { padding: 22px 20px; }
+.module-card h2 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 19px;
+    margin-bottom: 16px;
+    line-height: 1.3;
+}
+.module-body { font-size: 14px; line-height: 1.75; color: var(--text-color); }
+.module-body p { margin-bottom: 12px; }
+.module-body ul { padding-left: 20px; margin-bottom: 12px; }
+.module-body li { margin-bottom: 6px; }
+.module-body b { color: var(--primary-color); font-weight: 600; }
+
+.formula-box {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(69, 76, 127, 0.08));
+    border-left: 4px solid #a855f7;
+    padding: 14px 16px;
+    border-radius: 14px;
+    font-weight: 600;
+    text-align: center;
+    margin: 14px 0;
+    font-size: 13.5px;
+}
+
+.compare-row { display: flex; flex-direction: column; gap: 8px; margin: 14px 0; }
+.compare-bad, .compare-good {
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-size: 13.5px;
+    line-height: 1.5;
+}
+.compare-bad { background: rgba(239, 68, 68, 0.08); border-left: 4px solid var(--danger); }
+.compare-good { background: rgba(16, 185, 129, 0.08); border-left: 4px solid var(--success); }
+.compare-tag { font-weight: 700; margin-right: 6px; }
+.compare-effect { font-size: 12px; color: var(--light-text); padding: 0 4px; }
+
+.quote-callout {
+    background: rgba(69, 76, 127, 0.06);
+    border-radius: 14px;
+    padding: 16px 18px;
+    font-style: italic;
+    margin: 14px 0;
+    font-size: 13.5px;
+    color: var(--dark-color);
+}
+
+.taboo-card {
+    background: rgba(239, 68, 68, 0.06);
+    border-left: 4px solid var(--danger);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+}
+.taboo-card b { color: var(--danger); }
+
+.exercise-card { background: rgba(69, 76, 127, 0.05); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+.reveal-btn {
+    margin-top: 10px;
+    background: var(--tg-theme-button-color, var(--primary-color));
+    color: var(--tg-theme-button-text-color, #fff);
+    border: none;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.reveal-answer {
+    display: none;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed rgba(0,0,0,0.15);
+    font-size: 13.5px;
+}
+.reveal-answer.shown { display: block; }
+
+.training-nav-buttons { display: flex; gap: 10px; }
+.training-nav-buttons .btn-secondary { flex: 1; }
+.training-nav-buttons .btn-primary { flex: 2; }
+

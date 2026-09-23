@@ -66,6 +66,21 @@ def save_welcome(data):
         json.dump(data, f, ensure_ascii=False, indent=4)
 
 
+def load_trainings():
+    path = os.path.join(DATA_DIR, 'trainings.json')
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {"trainings": []}
+
+
+def save_trainings(data):
+    path = os.path.join(DATA_DIR, 'trainings.json')
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+
 # ─── Роли ───────────────────────────────────────────────────────
 
 ROLE_NAMES = {
@@ -84,7 +99,7 @@ def get_user_role(user) -> str:
 def can_access(user, section: str) -> bool:
     """
     Проверка доступа к разделу.
-    section: 'stats','users','rewards','broadcast','menu','welcome','tour','attendance','admins','gitpull'
+    section: 'stats','users','rewards','broadcast','menu','welcome','tour','trainings','attendance','admins','gitpull'
     """
     role = get_user_role(user)
     if role == 'superadmin':
@@ -92,7 +107,7 @@ def can_access(user, section: str) -> bool:
     if role == 'full':
         return section != 'admins'  # полный доступ везде кроме управления админами
     if role == 'content':
-        return section in ('menu', 'welcome', 'tour')
+        return section in ('menu', 'welcome', 'tour', 'trainings')
     return False
 
 
@@ -120,6 +135,7 @@ def get_admin_keyboard(user):
     ])
     buttons.append([
         InlineKeyboardButton("🎯 Квиз и Награды", callback_data="adm_quiz_mgmt"),
+        InlineKeyboardButton("🎓 Тренинги", callback_data="adm_trainings_mgmt"),
     ])
     if role == 'superadmin':
         buttons.append([
@@ -834,6 +850,12 @@ async def handle_admin_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # ── Велком-бук ──
     if context.user_data.get('awaiting_welcome'):
         handled = await handle_admin_welcome_text(update, context)
+        if handled:
+            return
+
+    # ── Тренинги ──
+    if context.user_data.get('awaiting_training'):
+        handled = await handle_admin_training_text(update, context)
         if handled:
             return
 
@@ -2110,10 +2132,441 @@ async def admin_test_fact_callback(update: Update, context: ContextTypes.DEFAULT
         await query.answer("Нет доступа!")
         return
     await query.answer("Запускаем тест...")
-    
+
     import publisher
     await publisher.send_random_fact(context)
     await query.message.reply_text("✅ Рассылка протестирована! Проверь рабочий чат.")
+
+
+# ─── Управление тренингами ────────────────────────────────────────
+
+async def admin_trainings_mgmt_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Список тренингов."""
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer()
+
+    data = load_trainings()
+    trainings = data.get('trainings', [])
+
+    text = "🎓 <b>Управление тренингами</b>\n\n"
+    text += f"Тренингов: <b>{len(trainings)}</b>\n\n"
+    text += "Тренинг — это обучающий материал с несколькими модулями, который сотрудник проходит в мини-приложении."
+
+    buttons = []
+    for i, tr in enumerate(trainings):
+        emoji = tr.get('emoji', '🎓')
+        title = tr.get('title', f'Тренинг {i+1}')
+        buttons.append([InlineKeyboardButton(f"{emoji} {title}", callback_data=f"adm_tr_{i}")])
+
+    buttons.append([InlineKeyboardButton("➕ Добавить тренинг", callback_data="adm_tradd")])
+    buttons.append([InlineKeyboardButton("🔙 Назад", callback_data="adm_menu")])
+
+    await query.message.edit_text(text, parse_mode='HTML', reply_markup=InlineKeyboardMarkup(buttons))
+
+
+async def admin_training_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Карточка тренинга: список модулей + действия."""
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer()
+
+    tidx = int(query.data.replace("adm_tr_", ""))
+    data = load_trainings()
+    trainings = data.get('trainings', [])
+    if tidx >= len(trainings):
+        await query.answer("Тренинг не найден")
+        return
+
+    training = trainings[tidx]
+    modules = training.get('modules', [])
+
+    text = (
+        f"{training.get('emoji', '🎓')} <b>{training.get('title', '')}</b>\n"
+        f"<i>{training.get('subtitle', '')}</i>\n\n"
+        f"Модулей: <b>{len(modules)}</b>\n\n"
+        f"Выбери модуль для редактирования или добавь новый:"
+    )
+
+    buttons = []
+    for mi, m in enumerate(modules):
+        mtitle = m.get('title', f'Модуль {mi+1}')
+        short = mtitle[:32] + '…' if len(mtitle) > 32 else mtitle
+        buttons.append([InlineKeyboardButton(f"📄 {short}", callback_data=f"adm_trmod_{tidx}_{mi}")])
+
+    buttons.append([InlineKeyboardButton("➕ Добавить модуль", callback_data=f"adm_trmodadd_{tidx}")])
+    buttons.append([
+        InlineKeyboardButton("✏️ Название", callback_data=f"adm_tredit_title_{tidx}"),
+        InlineKeyboardButton("✏️ Подзаголовок", callback_data=f"adm_tredit_subtitle_{tidx}"),
+    ])
+    buttons.append([
+        InlineKeyboardButton("✏️ Эмодзи", callback_data=f"adm_tredit_emoji_{tidx}"),
+        InlineKeyboardButton("🗑️ Удалить тренинг", callback_data=f"adm_trdel_{tidx}"),
+    ])
+    buttons.append([InlineKeyboardButton("🔙 К тренингам", callback_data="adm_trainings_mgmt")])
+
+    await query.message.edit_text(text, parse_mode='HTML', reply_markup=InlineKeyboardMarkup(buttons))
+
+
+async def admin_training_add_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Начать добавление нового тренинга."""
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer()
+
+    context.user_data['awaiting_training'] = {'action': 'add_training', 'step': 'emoji'}
+
+    await query.message.reply_text(
+        "➕ <b>Новый тренинг</b>\n\n"
+        "Шаг 1/3: Пришли <b>эмодзи</b> для тренинга (например: 💬).\n\n/cancel — отмена",
+        parse_mode='HTML'
+    )
+
+
+async def admin_training_edit_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Начать редактирование поля тренинга (title/subtitle/emoji)."""
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer()
+
+    # adm_tredit_title_0 / adm_tredit_subtitle_0 / adm_tredit_emoji_0
+    parts = query.data.replace("adm_tredit_", "").rsplit("_", 1)
+    field = parts[0]
+    tidx = int(parts[1])
+
+    context.user_data['awaiting_training'] = {'action': 'edit_training', 'field': field, 'tidx': tidx}
+
+    field_names = {'title': 'название', 'subtitle': 'подзаголовок', 'emoji': 'эмодзи'}
+    await query.message.reply_text(
+        f"✉️ Пришли новое значение поля «{field_names.get(field, field)}».\n\n/cancel — отмена",
+        parse_mode='HTML'
+    )
+
+
+async def admin_training_delete_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Подтверждение удаления тренинга."""
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer()
+
+    tidx = int(query.data.replace("adm_trdel_", ""))
+    data = load_trainings()
+    trainings = data.get('trainings', [])
+    if tidx >= len(trainings):
+        return
+
+    title = trainings[tidx].get('title', f'Тренинг {tidx+1}')
+    await query.message.edit_text(
+        f"⚠️ <b>Удалить тренинг?</b>\n\n«{title}»\n\nВсе его модули будут удалены. Это действие нельзя отменить!",
+        parse_mode='HTML',
+        reply_markup=InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton("✅ Да, удалить", callback_data=f"adm_trdelok_{tidx}"),
+                InlineKeyboardButton("❌ Отмена", callback_data=f"adm_tr_{tidx}"),
+            ]
+        ])
+    )
+
+
+async def admin_training_delete_ok_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Подтверждённое удаление тренинга."""
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer()
+
+    tidx = int(query.data.replace("adm_trdelok_", ""))
+    data = load_trainings()
+    trainings = data.get('trainings', [])
+    if tidx < len(trainings):
+        removed = trainings.pop(tidx)
+        save_trainings(data)
+        await query.message.edit_text(
+            f"✅ Тренинг <b>«{removed.get('title', '')}»</b> удалён.",
+            parse_mode='HTML',
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 К тренингам", callback_data="adm_trainings_mgmt")]
+            ])
+        )
+
+
+async def admin_training_module_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Карточка модуля тренинга."""
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer()
+
+    tidx_str, midx_str = query.data.replace("adm_trmod_", "").split("_")
+    tidx, midx = int(tidx_str), int(midx_str)
+
+    data = load_trainings()
+    trainings = data.get('trainings', [])
+    if tidx >= len(trainings) or midx >= len(trainings[tidx].get('modules', [])):
+        await query.answer("Модуль не найден")
+        return
+
+    module = trainings[tidx]['modules'][midx]
+    content = module.get('content', '')
+    preview = re.sub(r'<[^>]+>', ' ', content)
+    preview = re.sub(r'\s+', ' ', preview).strip()
+    if len(preview) > 250:
+        preview = preview[:250] + '...'
+
+    text = (
+        f"📄 <b>Модуль #{midx+1}</b>\n\n"
+        f"<b>Заголовок:</b> {module.get('title', '')}\n\n"
+        f"<b>Превью содержания:</b>\n{preview}"
+    )
+
+    await query.message.edit_text(
+        text,
+        parse_mode='HTML',
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("✏️ Изменить заголовок", callback_data=f"adm_trmedit_title_{tidx}_{midx}")],
+            [InlineKeyboardButton("✏️ Изменить содержание", callback_data=f"adm_trmedit_content_{tidx}_{midx}")],
+            [InlineKeyboardButton("🗑️ Удалить модуль", callback_data=f"adm_trmdel_{tidx}_{midx}")],
+            [InlineKeyboardButton("🔙 Назад", callback_data=f"adm_tr_{tidx}")],
+        ])
+    )
+
+
+async def admin_training_module_edit_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Начать редактирование заголовка/содержания модуля."""
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer()
+
+    # adm_trmedit_title_0_1 / adm_trmedit_content_0_1
+    rest = query.data.replace("adm_trmedit_", "")
+    field, tidx_str, midx_str = rest.split("_")
+    tidx, midx = int(tidx_str), int(midx_str)
+
+    context.user_data['awaiting_training'] = {
+        'action': 'edit_module', 'field': field, 'tidx': tidx, 'midx': midx
+    }
+
+    if field == 'title':
+        prompt = "✉️ Пришли новый <b>заголовок</b> модуля (например: 3. Скрипты для кассиров)."
+    else:
+        prompt = (
+            "✉️ Пришли новое <b>содержание</b> модуля.\n\n"
+            "💡 Можно использовать простой HTML: &lt;b&gt;жирный&lt;/b&gt;, "
+            "&lt;p&gt;абзац&lt;/p&gt;, &lt;ul&gt;&lt;li&gt;список&lt;/li&gt;&lt;/ul&gt;.\n\n"
+            "/cancel — отмена"
+        )
+
+    await query.message.reply_text(prompt, parse_mode='HTML')
+
+
+async def admin_training_module_add_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Начать добавление модуля в тренинг."""
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer()
+
+    tidx = int(query.data.replace("adm_trmodadd_", ""))
+    data = load_trainings()
+    trainings = data.get('trainings', [])
+    if tidx >= len(trainings):
+        await query.answer("Тренинг не найден")
+        return
+
+    context.user_data['awaiting_training'] = {'action': 'add_module', 'tidx': tidx, 'step': 'title'}
+
+    await query.message.reply_text(
+        f"➕ <b>Новый модуль</b> тренинга «{trainings[tidx].get('title','')}»\n\n"
+        f"Шаг 1/2: Напиши <b>заголовок</b> модуля.\nНапример: 3. Скрипты для кассиров\n\n/cancel — отмена",
+        parse_mode='HTML'
+    )
+
+
+async def admin_training_module_delete_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Подтверждение удаления модуля."""
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer()
+
+    tidx_str, midx_str = query.data.replace("adm_trmdel_", "").split("_")
+    tidx, midx = int(tidx_str), int(midx_str)
+
+    data = load_trainings()
+    trainings = data.get('trainings', [])
+    if tidx >= len(trainings) or midx >= len(trainings[tidx].get('modules', [])):
+        return
+
+    mtitle = trainings[tidx]['modules'][midx].get('title', f'Модуль {midx+1}')
+    await query.message.edit_text(
+        f"⚠️ <b>Удалить модуль?</b>\n\n«{mtitle}»\n\nЭто действие нельзя отменить!",
+        parse_mode='HTML',
+        reply_markup=InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton("✅ Да, удалить", callback_data=f"adm_trmdelok_{tidx}_{midx}"),
+                InlineKeyboardButton("❌ Отмена", callback_data=f"adm_trmod_{tidx}_{midx}"),
+            ]
+        ])
+    )
+
+
+async def admin_training_module_delete_ok_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Подтверждённое удаление модуля."""
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer()
+
+    tidx_str, midx_str = query.data.replace("adm_trmdelok_", "").split("_")
+    tidx, midx = int(tidx_str), int(midx_str)
+
+    data = load_trainings()
+    trainings = data.get('trainings', [])
+    if tidx < len(trainings) and midx < len(trainings[tidx].get('modules', [])):
+        removed = trainings[tidx]['modules'].pop(midx)
+        save_trainings(data)
+        await query.message.edit_text(
+            f"✅ Модуль <b>«{removed.get('title', '')}»</b> удалён.",
+            parse_mode='HTML',
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 К тренингу", callback_data=f"adm_tr_{tidx}")]
+            ])
+        )
+
+
+async def handle_admin_training_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
+    """Обработка текстовых шагов для тренингов."""
+    state = context.user_data.get('awaiting_training')
+    if not state:
+        return False
+
+    text = update.message.text.strip() if update.message.text else ""
+    if text == '/cancel':
+        context.user_data.pop('awaiting_training', None)
+        await update.message.reply_text(
+            "❌ Отменено.",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 К тренингам", callback_data="adm_trainings_mgmt")]])
+        )
+        return True
+
+    action = state['action']
+
+    if action == 'add_training':
+        step = state.get('step')
+        if step == 'emoji':
+            state['emoji'] = text
+            state['step'] = 'title'
+            await update.message.reply_text("Шаг 2/3: Напиши <b>название</b> тренинга.\n\n/cancel — отмена", parse_mode='HTML')
+            return True
+        elif step == 'title':
+            state['title'] = text
+            state['step'] = 'subtitle'
+            await update.message.reply_text(
+                "Шаг 3/3: Напиши короткий <b>подзаголовок</b> (одна строка, видна в списке тренингов).\n\n/cancel — отмена",
+                parse_mode='HTML'
+            )
+            return True
+        elif step == 'subtitle':
+            import uuid
+            data = load_trainings()
+            trainings = data.setdefault('trainings', [])
+            new_training = {
+                "id": f"training_{uuid.uuid4().hex[:8]}",
+                "emoji": state.get('emoji', '🎓'),
+                "title": state.get('title', 'Новый тренинг'),
+                "subtitle": text,
+                "modules": []
+            }
+            trainings.append(new_training)
+            save_trainings(data)
+            tidx = len(trainings) - 1
+            context.user_data.pop('awaiting_training', None)
+            await update.message.reply_text(
+                f"✅ Тренинг <b>«{new_training['title']}»</b> создан! Теперь добавь в него модули.",
+                parse_mode='HTML',
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("➕ Добавить модуль", callback_data=f"adm_trmodadd_{tidx}")],
+                    [InlineKeyboardButton("🔙 К тренингам", callback_data="adm_trainings_mgmt")],
+                ])
+            )
+            return True
+
+    elif action == 'edit_training':
+        tidx = state['tidx']
+        field = state['field']
+        data = load_trainings()
+        trainings = data.get('trainings', [])
+        if tidx < len(trainings):
+            trainings[tidx][field] = text
+            save_trainings(data)
+            await update.message.reply_text(
+                "✅ Поле обновлено!",
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 К тренингу", callback_data=f"adm_tr_{tidx}")]])
+            )
+        context.user_data.pop('awaiting_training', None)
+        return True
+
+    elif action == 'edit_module':
+        tidx, midx, field = state['tidx'], state['midx'], state['field']
+        data = load_trainings()
+        trainings = data.get('trainings', [])
+        if tidx < len(trainings) and midx < len(trainings[tidx].get('modules', [])):
+            trainings[tidx]['modules'][midx][field] = text
+            save_trainings(data)
+            field_name = "заголовок" if field == 'title' else "содержание"
+            await update.message.reply_text(
+                f"✅ {field_name.capitalize()} модуля обновлён!",
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 К модулю", callback_data=f"adm_trmod_{tidx}_{midx}")]])
+            )
+        context.user_data.pop('awaiting_training', None)
+        return True
+
+    elif action == 'add_module':
+        step = state.get('step')
+        tidx = state['tidx']
+        if step == 'title':
+            state['title'] = text
+            state['step'] = 'content'
+            await update.message.reply_text(
+                "Шаг 2/2: Напиши <b>содержание</b> модуля.\n\n"
+                "💡 Можно простой HTML: &lt;b&gt;жирный&lt;/b&gt;, &lt;p&gt;абзац&lt;/p&gt;.\n\n/cancel — отмена",
+                parse_mode='HTML'
+            )
+            return True
+        elif step == 'content':
+            data = load_trainings()
+            trainings = data.get('trainings', [])
+            if tidx < len(trainings):
+                new_module = {"title": state.get('title', 'Новый модуль'), "content": text}
+                trainings[tidx].setdefault('modules', []).append(new_module)
+                save_trainings(data)
+                await update.message.reply_text(
+                    f"✅ Модуль <b>«{new_module['title']}»</b> добавлен!",
+                    parse_mode='HTML',
+                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 К тренингу", callback_data=f"adm_tr_{tidx}")]])
+                )
+            context.user_data.pop('awaiting_training', None)
+            return True
+
+    return False
+
 
 def get_handlers():
     return [
@@ -2159,6 +2612,18 @@ def get_handlers():
         CallbackQueryHandler(admin_tour_delete_callback, pattern="^adm_tdel_"),
         CallbackQueryHandler(admin_tour_delete_ok_callback, pattern="^adm_tdelok_"),
         CallbackQueryHandler(admin_tour_add_callback, pattern="^adm_tadd$"),
+        # ── Управление тренингами ──
+        CallbackQueryHandler(admin_trainings_mgmt_callback, pattern="^adm_trainings_mgmt$"),
+        CallbackQueryHandler(admin_training_add_callback, pattern="^adm_tradd$"),
+        CallbackQueryHandler(admin_training_edit_callback, pattern="^adm_tredit_"),
+        CallbackQueryHandler(admin_training_delete_ok_callback, pattern="^adm_trdelok_"),
+        CallbackQueryHandler(admin_training_delete_callback, pattern="^adm_trdel_"),
+        CallbackQueryHandler(admin_training_module_add_callback, pattern="^adm_trmodadd_"),
+        CallbackQueryHandler(admin_training_module_edit_callback, pattern="^adm_trmedit_"),
+        CallbackQueryHandler(admin_training_module_delete_ok_callback, pattern="^adm_trmdelok_"),
+        CallbackQueryHandler(admin_training_module_delete_callback, pattern="^adm_trmdel_"),
+        CallbackQueryHandler(admin_training_module_callback, pattern="^adm_trmod_"),
+        CallbackQueryHandler(admin_training_callback, pattern="^adm_tr_"),
         # ── Управление администраторами ──
         CallbackQueryHandler(admin_admins_callback, pattern="^adm_admins$"),
         CallbackQueryHandler(admin_add_admin_callback, pattern="^adm_addadm$"),
