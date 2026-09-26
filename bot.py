@@ -24,6 +24,14 @@ def main():
     db.init_db()
     logger.info("✅ База данных инициализирована")
 
+    # Академия: применяем новую версию тренингов и вопросов квиза (если вышла)
+    try:
+        from academy.build import sync_if_new
+        if sync_if_new():
+            logger.info("🎓 Академия Matcha Club обновлена")
+    except Exception as e:
+        logger.error(f"⚠️ Не удалось обновить Академию: {e}")
+
     if not BOT_TOKEN:
         logger.error("❌ BOT_TOKEN не задан в .env!")
         return
