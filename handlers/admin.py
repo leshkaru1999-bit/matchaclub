@@ -81,6 +81,21 @@ def save_trainings(data):
         json.dump(data, f, ensure_ascii=False, indent=4)
 
 
+def load_events():
+    path = os.path.join(DATA_DIR, 'events.json')
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {"events": []}
+
+
+def save_events(data):
+    path = os.path.join(DATA_DIR, 'events.json')
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+
 # ─── Роли ───────────────────────────────────────────────────────
 
 ROLE_NAMES = {
@@ -99,7 +114,7 @@ def get_user_role(user) -> str:
 def can_access(user, section: str) -> bool:
     """
     Проверка доступа к разделу.
-    section: 'stats','users','rewards','broadcast','menu','welcome','tour','trainings','attendance','admins','gitpull'
+    section: 'stats','users','rewards','broadcast','menu','welcome','tour','trainings','events','attendance','admins','gitpull'
     """
     role = get_user_role(user)
     if role == 'superadmin':
@@ -107,7 +122,7 @@ def can_access(user, section: str) -> bool:
     if role == 'full':
         return section != 'admins'  # полный доступ везде кроме управления админами
     if role == 'content':
-        return section in ('menu', 'welcome', 'tour', 'trainings')
+        return section in ('menu', 'welcome', 'tour', 'trainings', 'events')
     return False
 
 
@@ -136,6 +151,9 @@ def get_admin_keyboard(user):
     buttons.append([
         InlineKeyboardButton("🎯 Квиз и Награды", callback_data="adm_quiz_mgmt"),
         InlineKeyboardButton("🎓 Тренинги", callback_data="adm_trainings_mgmt"),
+    ])
+    buttons.append([
+        InlineKeyboardButton("📅 События", callback_data="adm_events_mgmt"),
     ])
     if role == 'superadmin':
         buttons.append([
@@ -856,6 +874,12 @@ async def handle_admin_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # ── Тренинги ──
     if context.user_data.get('awaiting_training'):
         handled = await handle_admin_training_text(update, context)
+        if handled:
+            return
+
+    # ── События ──
+    if context.user_data.get('awaiting_event'):
+        handled = await handle_admin_event_text(update, context)
         if handled:
             return
 
@@ -2568,6 +2592,371 @@ async def handle_admin_training_text(update: Update, context: ContextTypes.DEFAU
     return False
 
 
+# ─── Управление событиями ──────────────────────────────────────────
+
+EVENT_TYPES = {
+    'cleaning':  ('🧹', 'Генеральная уборка'),
+    'training':  ('🎓', 'Тренинг'),
+    'meeting':   ('👥', 'Собрание'),
+    'important': ('❗', 'Важное событие'),
+    'other':     ('📌', 'Другое'),
+}
+
+
+def event_sort_key(ev):
+    return (ev.get('date', '9999-99-99'), ev.get('time') or '00:00')
+
+
+def format_event_when(ev):
+    d = ev.get('date', '')
+    parts = d.split('-')
+    disp_date = f"{parts[2]}.{parts[1]}.{parts[0]}" if len(parts) == 3 else d
+    return f"{disp_date} {ev['time']}" if ev.get('time') else disp_date
+
+
+def parse_event_date_input(text):
+    """Парсит 'ДД.ММ.ГГГГ' или 'ДД.ММ.ГГГГ ЧЧ:ММ' -> (date_iso, time) или None."""
+    m = re.fullmatch(r'(\d{1,2})\.(\d{1,2})\.(\d{4})(?:\s+(\d{1,2}):(\d{2}))?', text.strip())
+    if not m:
+        return None
+    day, month, year, hh, mm = m.groups()
+    day, month, year = int(day), int(month), int(year)
+    if not (1 <= day <= 31 and 1 <= month <= 12):
+        return None
+    time_str = ''
+    if hh is not None:
+        hh, mm = int(hh), int(mm)
+        if not (0 <= hh <= 23 and 0 <= mm <= 59):
+            return None
+        time_str = f"{hh:02d}:{mm:02d}"
+    return f"{year:04d}-{month:02d}-{day:02d}", time_str
+
+
+def event_type_buttons(callback_prefix, suffix=""):
+    row1, row2 = [], []
+    items = list(EVENT_TYPES.items())
+    for i, (key, (emoji, label)) in enumerate(items):
+        btn = InlineKeyboardButton(f"{emoji} {label}", callback_data=f"{callback_prefix}{key}{suffix}")
+        (row1 if i < 3 else row2).append(btn)
+    return [row1, row2] if row2 else [row1]
+
+
+async def admin_events_mgmt_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Список событий, отсортированный по дате."""
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer()
+
+    data = load_events()
+    events = data.get('events', [])
+    order = sorted(range(len(events)), key=lambda i: event_sort_key(events[i]))
+
+    text = "📅 <b>Управление событиями</b>\n\n"
+    text += f"Событий: <b>{len(events)}</b>\n\n"
+    text += "Сотрудники видят этот список в приложении (раздел «События»)."
+
+    buttons = []
+    for idx in order:
+        ev = events[idx]
+        emoji = ev.get('emoji', '📌')
+        label = f"{emoji} {format_event_when(ev)} — {ev.get('title', '')}"
+        if len(label) > 60:
+            label = label[:57] + '…'
+        buttons.append([InlineKeyboardButton(label, callback_data=f"adm_ev_{idx}")])
+
+    buttons.append([InlineKeyboardButton("➕ Добавить событие", callback_data="adm_evadd")])
+    buttons.append([InlineKeyboardButton("🔙 Назад", callback_data="adm_menu")])
+
+    await query.message.edit_text(text, parse_mode='HTML', reply_markup=InlineKeyboardMarkup(buttons))
+
+
+async def admin_event_add_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Начать добавление события — выбор типа."""
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer()
+
+    await query.message.reply_text(
+        "➕ <b>Новое событие</b>\n\nШаг 1/3: выбери тип события:",
+        parse_mode='HTML',
+        reply_markup=InlineKeyboardMarkup(event_type_buttons("adm_evtype_"))
+    )
+
+
+async def admin_event_type_pick_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Тип выбран при добавлении — просим название."""
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer()
+
+    ev_type = query.data.replace("adm_evtype_", "")
+    if ev_type not in EVENT_TYPES:
+        return
+    emoji, label = EVENT_TYPES[ev_type]
+
+    context.user_data['awaiting_event'] = {'action': 'add', 'type': ev_type, 'step': 'title'}
+
+    await query.message.edit_text(
+        f"➕ <b>Новое событие</b> — {emoji} {label}\n\n"
+        f"Шаг 2/3: напиши <b>название</b> события.\nНапример: Генеральная уборка кухни\n\n/cancel — отмена",
+        parse_mode='HTML'
+    )
+
+
+def render_event_view(idx, ev):
+    emoji, label = EVENT_TYPES.get(ev.get('type'), ('📌', 'Другое'))
+    text = (
+        f"{ev.get('emoji', emoji)} <b>{ev.get('title', '')}</b>\n"
+        f"<i>{label}</i>\n\n"
+        f"🗓 <b>Когда:</b> {format_event_when(ev)}\n\n"
+        f"{ev.get('description', '') or '<i>Без описания</i>'}"
+    )
+    buttons = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton("✏️ Название", callback_data=f"adm_evedit_title_{idx}"),
+            InlineKeyboardButton("✏️ Дата/время", callback_data=f"adm_evedit_date_{idx}"),
+        ],
+        [
+            InlineKeyboardButton("✏️ Описание", callback_data=f"adm_evedit_description_{idx}"),
+            InlineKeyboardButton("✏️ Тип", callback_data=f"adm_evedit_type_{idx}"),
+        ],
+        [InlineKeyboardButton("🗑️ Удалить событие", callback_data=f"adm_evdel_{idx}")],
+        [InlineKeyboardButton("🔙 К событиям", callback_data="adm_events_mgmt")],
+    ])
+    return text, buttons
+
+
+async def admin_event_view_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Карточка события."""
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer()
+
+    idx = int(query.data.replace("adm_ev_", ""))
+    data = load_events()
+    events = data.get('events', [])
+    if idx >= len(events):
+        await query.answer("Событие не найдено")
+        return
+
+    text, buttons = render_event_view(idx, events[idx])
+    await query.message.edit_text(text, parse_mode='HTML', reply_markup=buttons)
+
+
+async def admin_event_edit_field_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Начать редактирование поля события."""
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer()
+
+    parts = query.data.replace("adm_evedit_", "").rsplit("_", 1)
+    field, idx = parts[0], int(parts[1])
+
+    if field == 'type':
+        await query.message.edit_text(
+            "✏️ Выбери новый тип события:",
+            reply_markup=InlineKeyboardMarkup(event_type_buttons("adm_evsettype_", f"_{idx}"))
+        )
+        return
+
+    context.user_data['awaiting_event'] = {'action': 'edit', 'field': field, 'idx': idx}
+
+    prompts = {
+        'title': "✉️ Пришли новое <b>название</b> события.",
+        'date': "✉️ Пришли новую <b>дату</b> в формате ДД.ММ.ГГГГ, например 05.10.2026, "
+                "или с временем: 05.10.2026 10:00.",
+        'description': "✉️ Пришли новое <b>описание</b> события (или «-», чтобы убрать описание).",
+    }
+    await query.message.reply_text(prompts.get(field, "✉️ Пришли новое значение.") + "\n\n/cancel — отмена", parse_mode='HTML')
+
+
+async def admin_event_set_type_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Прямая смена типа события (без текстового ввода)."""
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer()
+
+    rest = query.data.replace("adm_evsettype_", "")
+    ev_type, idx_str = rest.rsplit("_", 1)
+    idx = int(idx_str)
+    if ev_type not in EVENT_TYPES:
+        return
+
+    data = load_events()
+    events = data.get('events', [])
+    if idx >= len(events):
+        return
+    emoji, _ = EVENT_TYPES[ev_type]
+    events[idx]['type'] = ev_type
+    events[idx]['emoji'] = emoji
+    save_events(data)
+
+    text, buttons = render_event_view(idx, events[idx])
+    await query.message.edit_text(text, parse_mode='HTML', reply_markup=buttons)
+
+
+async def admin_event_delete_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Подтверждение удаления события."""
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer()
+
+    idx = int(query.data.replace("adm_evdel_", ""))
+    data = load_events()
+    events = data.get('events', [])
+    if idx >= len(events):
+        return
+
+    title = events[idx].get('title', f'Событие {idx+1}')
+    await query.message.edit_text(
+        f"⚠️ <b>Удалить событие?</b>\n\n«{title}»\n\nЭто действие нельзя отменить!",
+        parse_mode='HTML',
+        reply_markup=InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton("✅ Да, удалить", callback_data=f"adm_evdelok_{idx}"),
+                InlineKeyboardButton("❌ Отмена", callback_data=f"adm_ev_{idx}"),
+            ]
+        ])
+    )
+
+
+async def admin_event_delete_ok_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Подтверждённое удаление события."""
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer()
+
+    idx = int(query.data.replace("adm_evdelok_", ""))
+    data = load_events()
+    events = data.get('events', [])
+    if idx < len(events):
+        removed = events.pop(idx)
+        save_events(data)
+        await query.message.edit_text(
+            f"✅ Событие <b>«{removed.get('title', '')}»</b> удалено.",
+            parse_mode='HTML',
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 К событиям", callback_data="adm_events_mgmt")]
+            ])
+        )
+
+
+async def handle_admin_event_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
+    """Текстовые шаги добавления/редактирования события."""
+    state = context.user_data.get('awaiting_event')
+    if not state:
+        return False
+
+    text = update.message.text.strip() if update.message.text else ""
+    if text == '/cancel':
+        context.user_data.pop('awaiting_event', None)
+        await update.message.reply_text(
+            "❌ Отменено.",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 К событиям", callback_data="adm_events_mgmt")]])
+        )
+        return True
+
+    action = state['action']
+
+    if action == 'add':
+        step = state.get('step')
+        if step == 'title':
+            state['title'] = text
+            state['step'] = 'date'
+            await update.message.reply_text(
+                "Шаг 3/3: пришли <b>дату</b> события в формате ДД.ММ.ГГГГ (например 05.10.2026), "
+                "или с временем: 05.10.2026 10:00.\n\n/cancel — отмена",
+                parse_mode='HTML'
+            )
+            return True
+        elif step == 'date':
+            parsed = parse_event_date_input(text)
+            if not parsed:
+                await update.message.reply_text(
+                    "❌ Не похоже на дату. Формат: ДД.ММ.ГГГГ или ДД.ММ.ГГГГ ЧЧ:ММ.\nПопробуй ещё раз или /cancel."
+                )
+                return True
+            date_iso, time_str = parsed
+            state['date'] = date_iso
+            state['time'] = time_str
+            state['step'] = 'description'
+            await update.message.reply_text(
+                "Последний шаг: добавь короткое <b>описание</b> (необязательно — отправь «-», чтобы пропустить).\n\n/cancel — отмена",
+                parse_mode='HTML'
+            )
+            return True
+        elif step == 'description':
+            import uuid
+            emoji, _ = EVENT_TYPES.get(state['type'], ('📌', 'Другое'))
+            data = load_events()
+            events = data.setdefault('events', [])
+            new_event = {
+                "id": f"evt_{uuid.uuid4().hex[:8]}",
+                "type": state['type'],
+                "emoji": emoji,
+                "title": state.get('title', 'Событие'),
+                "date": state['date'],
+                "time": state.get('time', ''),
+                "description": '' if text == '-' else text,
+            }
+            events.append(new_event)
+            save_events(data)
+            context.user_data.pop('awaiting_event', None)
+            await update.message.reply_text(
+                f"✅ Событие <b>«{new_event['title']}»</b> добавлено на {format_event_when(new_event)}!",
+                parse_mode='HTML',
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 К событиям", callback_data="adm_events_mgmt")]])
+            )
+            return True
+
+    elif action == 'edit':
+        idx, field = state['idx'], state['field']
+        data = load_events()
+        events = data.get('events', [])
+        if idx >= len(events):
+            context.user_data.pop('awaiting_event', None)
+            return True
+
+        if field == 'date':
+            parsed = parse_event_date_input(text)
+            if not parsed:
+                await update.message.reply_text(
+                    "❌ Не похоже на дату. Формат: ДД.ММ.ГГГГ или ДД.ММ.ГГГГ ЧЧ:ММ.\nПопробуй ещё раз или /cancel."
+                )
+                return True
+            events[idx]['date'], events[idx]['time'] = parsed
+        elif field == 'description':
+            events[idx]['description'] = '' if text == '-' else text
+        else:
+            events[idx][field] = text
+
+        save_events(data)
+        context.user_data.pop('awaiting_event', None)
+        await update.message.reply_text(
+            "✅ Событие обновлено!",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 К событию", callback_data=f"adm_ev_{idx}")]])
+        )
+        return True
+
+    return False
+
+
 def get_handlers():
     return [
         CommandHandler("admin", admin_command),
@@ -2624,6 +3013,15 @@ def get_handlers():
         CallbackQueryHandler(admin_training_module_delete_callback, pattern="^adm_trmdel_"),
         CallbackQueryHandler(admin_training_module_callback, pattern="^adm_trmod_"),
         CallbackQueryHandler(admin_training_callback, pattern="^adm_tr_"),
+        # ── Управление событиями ──
+        CallbackQueryHandler(admin_events_mgmt_callback, pattern="^adm_events_mgmt$"),
+        CallbackQueryHandler(admin_event_add_callback, pattern="^adm_evadd$"),
+        CallbackQueryHandler(admin_event_type_pick_callback, pattern="^adm_evtype_"),
+        CallbackQueryHandler(admin_event_set_type_callback, pattern="^adm_evsettype_"),
+        CallbackQueryHandler(admin_event_edit_field_callback, pattern="^adm_evedit_"),
+        CallbackQueryHandler(admin_event_delete_ok_callback, pattern="^adm_evdelok_"),
+        CallbackQueryHandler(admin_event_delete_callback, pattern="^adm_evdel_"),
+        CallbackQueryHandler(admin_event_view_callback, pattern="^adm_ev_"),
         # ── Управление администраторами ──
         CallbackQueryHandler(admin_admins_callback, pattern="^adm_admins$"),
         CallbackQueryHandler(admin_add_admin_callback, pattern="^adm_addadm$"),

@@ -115,6 +115,7 @@ const app = {
                 if (page === 'quiz') this.initQuizPage();
                 if (page === 'tour') await this.loadTour();
                 if (page === 'trainings') await this.loadTrainings();
+                if (page === 'events') await this.loadEvents();
 
                 // Плавное появление нового
                 main.style.opacity = '1';
@@ -585,6 +586,98 @@ const app = {
         if (!answer) return;
         const shown = answer.classList.toggle('shown');
         btn.textContent = shown ? 'Скрыть ответ' : btn.dataset.label || 'Показать ответ';
+    },
+
+    // ─── События ────────────────────────────────────────────
+    EVENT_TYPE_STYLE: {
+        cleaning:  { color: '#0ea5e9', bg: 'rgba(14, 165, 233, 0.12)', label: 'Генеральная уборка' },
+        training:  { color: '#a855f7', bg: 'rgba(168, 85, 247, 0.12)', label: 'Тренинг' },
+        meeting:   { color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.12)', label: 'Собрание' },
+        important: { color: '#ef4444', bg: 'rgba(239, 68, 68, 0.12)', label: 'Важное событие' },
+        other:     { color: '#6b7280', bg: 'rgba(107, 114, 128, 0.12)', label: 'Другое' },
+    },
+    MONTHS_SHORT: ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'],
+    WEEKDAYS: ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'],
+
+    parseEventDate(dateStr) {
+        const [y, m, d] = dateStr.split('-').map(Number);
+        return new Date(y, m - 1, d);
+    },
+
+    formatEventWhen(ev) {
+        const d = this.parseEventDate(ev.date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const diffDays = Math.round((d - today) / 86400000);
+        let label;
+        if (diffDays === 0) label = 'сегодня';
+        else if (diffDays === 1) label = 'завтра';
+        else if (diffDays === -1) label = 'вчера';
+        else if (diffDays > 1 && diffDays < 7) label = this.WEEKDAYS[d.getDay()];
+        else label = `${d.getDate()} ${this.MONTHS_SHORT[d.getMonth()]}`;
+        label = label.charAt(0).toUpperCase() + label.slice(1);
+        if (ev.time) label += `, ${ev.time}`;
+        return label;
+    },
+
+    renderEventCard(ev, d, today) {
+        const style = this.EVENT_TYPE_STYLE[ev.type] || this.EVENT_TYPE_STYLE.other;
+        const isPast = d < today;
+        const card = document.createElement('div');
+        card.className = 'event-card premium-card' + (isPast ? ' is-past' : '');
+        card.style.setProperty('--event-color', style.color);
+        card.style.setProperty('--event-color-bg', style.bg);
+        card.innerHTML = `
+            <div class="event-date-badge">
+                <span class="day">${d.getDate()}</span>
+                <span class="month">${this.MONTHS_SHORT[d.getMonth()]}</span>
+            </div>
+            <div class="event-body">
+                <div class="event-title-row"><h3>${ev.emoji || '📌'} ${ev.title}</h3></div>
+                <div class="event-when">${this.formatEventWhen(ev)} · <span class="event-type-tag">${style.label}</span></div>
+                ${ev.description ? `<div class="event-desc">${ev.description}</div>` : ''}
+            </div>
+        `;
+        return card;
+    },
+
+    async loadEvents() {
+        const container = document.getElementById('events-list');
+        if (!container) return;
+        try {
+            const res = await fetch(`${API_BASE}/api/events`);
+            const data = await res.json();
+            const events = data.events || [];
+            container.innerHTML = '';
+
+            if (events.length === 0) {
+                container.innerHTML = '<p class="events-empty">Событий пока нет</p>';
+                return;
+            }
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const withDate = events.map(ev => ({ ev, d: this.parseEventDate(ev.date) }));
+            withDate.sort((a, b) => a.d - b.d || (a.ev.time || '').localeCompare(b.ev.time || ''));
+
+            const upcoming = withDate.filter(x => x.d >= today);
+            const past = withDate.filter(x => x.d < today).reverse();
+
+            const renderGroup = (label, items) => {
+                if (items.length === 0) return;
+                const labelEl = document.createElement('div');
+                labelEl.className = 'events-section-label';
+                labelEl.textContent = label;
+                container.appendChild(labelEl);
+                items.forEach(({ ev, d }) => container.appendChild(this.renderEventCard(ev, d, today)));
+            };
+
+            renderGroup('Ближайшие', upcoming);
+            renderGroup('Прошедшие', past);
+        } catch (e) {
+            console.error('Ошибка загрузки событий:', e);
+            container.innerHTML = '<p class="events-empty" style="color:red;">Ошибка загрузки событий</p>';
+        }
     },
 
     async loadProfile() {

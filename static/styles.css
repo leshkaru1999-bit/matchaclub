@@ -878,3 +878,100 @@ main {
 .training-nav-buttons .btn-secondary { flex: 1; }
 .training-nav-buttons .btn-primary { flex: 2; }
 
+/* ─── Events ─── */
+.events-page {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-bottom: 20px;
+}
+.events-hero {
+    text-align: center;
+    padding: 24px 16px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(69, 76, 127, 0.1) 100%);
+    border-radius: 20px;
+    margin-bottom: 4px;
+}
+.events-hero-icon { font-size: 48px; margin-bottom: 12px; }
+.events-hero h2 { font-size: 22px; margin-bottom: 8px; }
+.events-hero p { font-size: 14px; color: var(--tg-theme-hint-color); line-height: 1.4; }
+
+.events-section-label {
+    font-size: 12.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--light-text);
+    padding-left: 4px;
+    margin-top: 4px;
+}
+
+.events-list { display: flex; flex-direction: column; gap: 10px; }
+
+.event-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px;
+    border-left: 4px solid var(--event-color, var(--primary-color));
+}
+.event-card.is-past { opacity: 0.55; }
+
+.event-date-badge {
+    flex: none;
+    width: 52px;
+    text-align: center;
+    background: rgba(69, 76, 127, 0.07);
+    border-radius: 12px;
+    padding: 8px 4px;
+}
+.event-date-badge .day {
+    display: block;
+    font-family: 'Outfit', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--event-color, var(--primary-color));
+    line-height: 1;
+}
+.event-date-badge .month {
+    display: block;
+    font-size: 10.5px;
+    color: var(--light-text);
+    text-transform: uppercase;
+    margin-top: 3px;
+}
+
+.event-body { flex: 1; min-width: 0; }
+.event-title-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 3px;
+}
+.event-title-row h3 { font-size: 15px; font-weight: 600; }
+.event-type-tag {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--event-color, var(--primary-color));
+    background: var(--event-color-bg, rgba(69, 76, 127, 0.12));
+    padding: 2px 8px;
+    border-radius: 8px;
+    white-space: nowrap;
+}
+.event-when {
+    font-size: 12.5px;
+    color: var(--light-text);
+    margin-bottom: 4px;
+}
+.event-desc {
+    font-size: 13px;
+    color: var(--text-color);
+    line-height: 1.5;
+}
+.events-empty {
+    text-align: center;
+    color: var(--light-text);
+    padding: 30px 10px;
+}
+

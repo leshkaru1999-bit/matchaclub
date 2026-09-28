@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Matcha Club</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="styles.css?v=20260923">
+    <link rel="stylesheet" href="styles.css?v=20260928">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -181,6 +181,13 @@
                         <p>Прокачай навыки сервиса и продаж</p>
                     </div>
                     <div class="action-icon">🎓</div>
+                </div>
+                <div class="action-card premium-card" onclick="app.navigate('events')">
+                    <div class="action-content">
+                        <h3>События</h3>
+                        <p>Уборки, тренинги и важные даты</p>
+                    </div>
+                    <div class="action-icon">📅</div>
                 </div>
                 <div class="action-card premium-card" onclick="app.showFact()">
                     <div class="action-content">
@@ -400,6 +407,20 @@
         </div>
     </template>
 
-    <script src="app.v2.js?v=20260923"></script>
+    <!-- ── События ── -->
+    <template id="tpl-events">
+        <div class="page events-page animate-fade-in">
+            <div class="events-hero premium-card">
+                <div class="events-hero-icon">📅</div>
+                <h2>События</h2>
+                <p>Генеральные уборки, тренинги, собрания и другие важные даты команды</p>
+            </div>
+            <div id="events-list" class="events-list">
+                <div class="loader"><div class="spinner"></div></div>
+            </div>
+        </div>
+    </template>
+
+    <script src="app.v2.js?v=20260928"></script>
 </body>
 </html>
