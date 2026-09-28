@@ -2602,6 +2602,50 @@ EVENT_TYPES = {
     'other':     ('📌', 'Другое'),
 }
 
+BRANCHES = [
+    ('tsum', 'ТСМ'),
+    ('shevchenko', 'Шевченко'),
+    ('forum', 'Форум'),
+    ('itpark', 'Айти Парк'),
+    ('foodmall', 'Фудмолл'),
+]
+BRANCH_NAMES = dict(BRANCHES)
+
+
+def format_event_branches(ev):
+    branches = ev.get('branches') or ['all']
+    if 'all' in branches:
+        return "🌍 Все филиалы"
+    names = [BRANCH_NAMES[b] for b in branches if b in BRANCH_NAMES]
+    return "🏢 " + ", ".join(names) if names else "—"
+
+
+def render_branch_picker(selected):
+    """selected: 'all' или set() строковых id филиалов."""
+    is_all = selected == 'all'
+    if is_all:
+        summary = "✅ Все филиалы"
+    elif selected:
+        summary = "Выбрано: " + ", ".join(BRANCH_NAMES[b] for b in sorted(selected))
+    else:
+        summary = "Ничего не выбрано — отметь хотя бы один филиал"
+
+    text = f"🏢 <b>Филиал(ы) события</b>\n\n{summary}"
+
+    buttons = []
+    row = []
+    for bid, name in BRANCHES:
+        checked = is_all or (not is_all and bid in selected)
+        row.append(InlineKeyboardButton(f"{'✅ ' if checked else ''}{name}", callback_data=f"adm_evbr_t_{bid}"))
+        if len(row) == 2:
+            buttons.append(row)
+            row = []
+    if row:
+        buttons.append(row)
+    buttons.append([InlineKeyboardButton(f"{'✅ ' if is_all else ''}🌍 Все филиалы", callback_data="adm_evbr_all")])
+    buttons.append([InlineKeyboardButton("✔️ Готово", callback_data="adm_evbr_done")])
+    return text, InlineKeyboardMarkup(buttons)
+
 
 def event_sort_key(ev):
     return (ev.get('date', '9999-99-99'), ev.get('time') or '00:00')
@@ -2681,7 +2725,7 @@ async def admin_event_add_callback(update: Update, context: ContextTypes.DEFAULT
     await query.answer()
 
     await query.message.reply_text(
-        "➕ <b>Новое событие</b>\n\nШаг 1/3: выбери тип события:",
+        "➕ <b>Новое событие</b>\n\nШаг 1/5: выбери тип события:",
         parse_mode='HTML',
         reply_markup=InlineKeyboardMarkup(event_type_buttons("adm_evtype_"))
     )
@@ -2704,7 +2748,7 @@ async def admin_event_type_pick_callback(update: Update, context: ContextTypes.D
 
     await query.message.edit_text(
         f"➕ <b>Новое событие</b> — {emoji} {label}\n\n"
-        f"Шаг 2/3: напиши <b>название</b> события.\nНапример: Генеральная уборка кухни\n\n/cancel — отмена",
+        f"Шаг 2/5: напиши <b>название</b> события.\nНапример: Генеральная уборка кухни\n\n/cancel — отмена",
         parse_mode='HTML'
     )
 
@@ -2714,7 +2758,8 @@ def render_event_view(idx, ev):
     text = (
         f"{ev.get('emoji', emoji)} <b>{ev.get('title', '')}</b>\n"
         f"<i>{label}</i>\n\n"
-        f"🗓 <b>Когда:</b> {format_event_when(ev)}\n\n"
+        f"🗓 <b>Когда:</b> {format_event_when(ev)}\n"
+        f"🏢 <b>Филиал:</b> {format_event_branches(ev)}\n\n"
         f"{ev.get('description', '') or '<i>Без описания</i>'}"
     )
     buttons = InlineKeyboardMarkup([
@@ -2726,6 +2771,7 @@ def render_event_view(idx, ev):
             InlineKeyboardButton("✏️ Описание", callback_data=f"adm_evedit_description_{idx}"),
             InlineKeyboardButton("✏️ Тип", callback_data=f"adm_evedit_type_{idx}"),
         ],
+        [InlineKeyboardButton("✏️ Филиал", callback_data=f"adm_evedit_branches_{idx}")],
         [InlineKeyboardButton("🗑️ Удалить событие", callback_data=f"adm_evdel_{idx}")],
         [InlineKeyboardButton("🔙 К событиям", callback_data="adm_events_mgmt")],
     ])
@@ -2767,6 +2813,18 @@ async def admin_event_edit_field_callback(update: Update, context: ContextTypes.
             "✏️ Выбери новый тип события:",
             reply_markup=InlineKeyboardMarkup(event_type_buttons("adm_evsettype_", f"_{idx}"))
         )
+        return
+
+    if field == 'branches':
+        data = load_events()
+        events = data.get('events', [])
+        if idx >= len(events):
+            return
+        existing = events[idx].get('branches') or ['all']
+        selected = 'all' if 'all' in existing else set(existing)
+        context.user_data['awaiting_event'] = {'action': 'edit_branches', 'idx': idx, 'selected': selected}
+        text, kb = render_branch_picker(selected)
+        await query.message.edit_text(text, parse_mode='HTML', reply_markup=kb)
         return
 
     context.user_data['awaiting_event'] = {'action': 'edit', 'field': field, 'idx': idx}
@@ -2897,31 +2955,17 @@ async def handle_admin_event_text(update: Update, context: ContextTypes.DEFAULT_
             state['time'] = time_str
             state['step'] = 'description'
             await update.message.reply_text(
-                "Последний шаг: добавь короткое <b>описание</b> (необязательно — отправь «-», чтобы пропустить).\n\n/cancel — отмена",
+                "Шаг 4/5: добавь короткое <b>описание</b> (необязательно — отправь «-», чтобы пропустить).\n\n/cancel — отмена",
                 parse_mode='HTML'
             )
             return True
         elif step == 'description':
-            import uuid
-            emoji, _ = EVENT_TYPES.get(state['type'], ('📌', 'Другое'))
-            data = load_events()
-            events = data.setdefault('events', [])
-            new_event = {
-                "id": f"evt_{uuid.uuid4().hex[:8]}",
-                "type": state['type'],
-                "emoji": emoji,
-                "title": state.get('title', 'Событие'),
-                "date": state['date'],
-                "time": state.get('time', ''),
-                "description": '' if text == '-' else text,
-            }
-            events.append(new_event)
-            save_events(data)
-            context.user_data.pop('awaiting_event', None)
+            state['description'] = '' if text == '-' else text
+            state['step'] = 'branches'
+            state['selected'] = 'all'
+            text_msg, kb = render_branch_picker('all')
             await update.message.reply_text(
-                f"✅ Событие <b>«{new_event['title']}»</b> добавлено на {format_event_when(new_event)}!",
-                parse_mode='HTML',
-                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 К событиям", callback_data="adm_events_mgmt")]])
+                "Шаг 5/5: " + text_msg, parse_mode='HTML', reply_markup=kb
             )
             return True
 
@@ -2955,6 +2999,109 @@ async def handle_admin_event_text(update: Update, context: ContextTypes.DEFAULT_
         return True
 
     return False
+
+
+async def admin_event_branch_toggle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Переключить один филиал в селекторе."""
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+
+    state = context.user_data.get('awaiting_event')
+    if not state:
+        await query.answer()
+        return
+
+    bid = query.data.replace("adm_evbr_t_", "")
+    sel = state.get('selected', 'all')
+    if sel == 'all':
+        sel = {bid}
+    else:
+        sel = set(sel)
+        if bid in sel:
+            sel.discard(bid)
+        else:
+            sel.add(bid)
+    state['selected'] = sel
+
+    await query.answer()
+    text, kb = render_branch_picker(sel)
+    await query.message.edit_text(text, parse_mode='HTML', reply_markup=kb)
+
+
+async def admin_event_branch_all_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Выбрать «Все филиалы»."""
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+
+    state = context.user_data.get('awaiting_event')
+    if not state:
+        await query.answer()
+        return
+
+    state['selected'] = 'all'
+    await query.answer()
+    text, kb = render_branch_picker('all')
+    await query.message.edit_text(text, parse_mode='HTML', reply_markup=kb)
+
+
+async def admin_event_branch_done_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Подтвердить выбор филиалов — сохранить событие (add) или обновить (edit_branches)."""
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+
+    state = context.user_data.get('awaiting_event')
+    if not state:
+        await query.answer()
+        return
+
+    sel = state.get('selected', 'all')
+    if sel != 'all' and len(sel) == 0:
+        await query.answer("Выбери хотя бы один филиал или «Все филиалы»", show_alert=True)
+        return
+    branches = ['all'] if sel == 'all' else sorted(sel)
+    await query.answer()
+
+    if state['action'] == 'add':
+        import uuid
+        emoji, _ = EVENT_TYPES.get(state['type'], ('📌', 'Другое'))
+        data = load_events()
+        events = data.setdefault('events', [])
+        new_event = {
+            "id": f"evt_{uuid.uuid4().hex[:8]}",
+            "type": state['type'],
+            "emoji": emoji,
+            "title": state.get('title', 'Событие'),
+            "date": state['date'],
+            "time": state.get('time', ''),
+            "description": state.get('description', ''),
+            "branches": branches,
+        }
+        events.append(new_event)
+        save_events(data)
+        context.user_data.pop('awaiting_event', None)
+        await query.message.edit_text(
+            f"✅ Событие <b>«{new_event['title']}»</b> добавлено на {format_event_when(new_event)}!\n"
+            f"🏢 {format_event_branches(new_event)}",
+            parse_mode='HTML',
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 К событиям", callback_data="adm_events_mgmt")]])
+        )
+    elif state['action'] == 'edit_branches':
+        idx = state['idx']
+        data = load_events()
+        events = data.get('events', [])
+        context.user_data.pop('awaiting_event', None)
+        if idx >= len(events):
+            return
+        events[idx]['branches'] = branches
+        save_events(data)
+        text, kb = render_event_view(idx, events[idx])
+        await query.message.edit_text(text, parse_mode='HTML', reply_markup=kb)
 
 
 def get_handlers():
@@ -3021,6 +3168,9 @@ def get_handlers():
         CallbackQueryHandler(admin_event_edit_field_callback, pattern="^adm_evedit_"),
         CallbackQueryHandler(admin_event_delete_ok_callback, pattern="^adm_evdelok_"),
         CallbackQueryHandler(admin_event_delete_callback, pattern="^adm_evdel_"),
+        CallbackQueryHandler(admin_event_branch_toggle_callback, pattern="^adm_evbr_t_"),
+        CallbackQueryHandler(admin_event_branch_all_callback, pattern="^adm_evbr_all$"),
+        CallbackQueryHandler(admin_event_branch_done_callback, pattern="^adm_evbr_done$"),
         CallbackQueryHandler(admin_event_view_callback, pattern="^adm_ev_"),
         # ── Управление администраторами ──
         CallbackQueryHandler(admin_admins_callback, pattern="^adm_admins$"),

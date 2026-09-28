@@ -598,6 +598,16 @@ const app = {
     },
     MONTHS_SHORT: ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'],
     WEEKDAYS: ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'],
+    BRANCH_NAMES: {
+        tsum: 'ТСМ', shevchenko: 'Шевченко', forum: 'Форум', itpark: 'Айти Парк', foodmall: 'Фудмолл',
+    },
+
+    formatEventBranches(ev) {
+        const branches = (ev.branches && ev.branches.length) ? ev.branches : ['all'];
+        if (branches.includes('all')) return '🌍 Все филиалы';
+        const names = branches.map(b => this.BRANCH_NAMES[b]).filter(Boolean);
+        return names.length ? `🏢 ${names.join(', ')}` : '';
+    },
 
     parseEventDate(dateStr) {
         const [y, m, d] = dateStr.split('-').map(Number);
@@ -635,6 +645,7 @@ const app = {
             <div class="event-body">
                 <div class="event-title-row"><h3>${ev.emoji || '📌'} ${ev.title}</h3></div>
                 <div class="event-when">${this.formatEventWhen(ev)} · <span class="event-type-tag">${style.label}</span></div>
+                <div class="event-branch-tag">${this.formatEventBranches(ev)}</div>
                 ${ev.description ? `<div class="event-desc">${ev.description}</div>` : ''}
             </div>
         `;
