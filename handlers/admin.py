@@ -2128,6 +2128,7 @@ async def admin_settings_callback(update: Update, context: ContextTypes.DEFAULT_
         [InlineKeyboardButton("Штраф за ошибку", callback_data="adm_set_ptswrong")],
         [InlineKeyboardButton("Рабочий чат (ID)", callback_data="adm_set_chatid")],
         [InlineKeyboardButton("📢 Тест факта дня", callback_data="adm_test_fact")],
+        [InlineKeyboardButton("📢 Тест напоминаний о событиях", callback_data="adm_test_events")],
         [InlineKeyboardButton("🔙 Назад", callback_data="adm_menu")]
     ]
     await query.message.edit_text(text, parse_mode='HTML', reply_markup=InlineKeyboardMarkup(buttons))
@@ -2160,6 +2161,23 @@ async def admin_test_fact_callback(update: Update, context: ContextTypes.DEFAULT
     import publisher
     await publisher.send_random_fact(context)
     await query.message.reply_text("✅ Рассылка протестирована! Проверь рабочий чат.")
+
+
+async def admin_test_events_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    if not is_superadmin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer("Запускаем тест...")
+
+    import publisher
+    sent = await publisher.send_event_reminders(context)
+    if sent:
+        await query.message.reply_text(f"✅ Отправлено напоминаний: {sent}. Проверь рабочий чат.")
+    else:
+        await query.message.reply_text(
+            "ℹ️ На завтра событий не найдено (или не задан рабочий чат) — отправлять было нечего."
+        )
 
 
 # ─── Управление тренингами ────────────────────────────────────────
@@ -3111,6 +3129,7 @@ def get_handlers():
         CallbackQueryHandler(admin_settings_callback, pattern="^adm_settings$"),
         CallbackQueryHandler(admin_set_setting_callback, pattern="^adm_set_"),
         CallbackQueryHandler(admin_test_fact_callback, pattern="^adm_test_fact$"),
+        CallbackQueryHandler(admin_test_events_callback, pattern="^adm_test_events$"),
         CallbackQueryHandler(admin_gitpull_callback, pattern="^adm_gitpull$"),
         CallbackQueryHandler(admin_menu_callback, pattern="^adm_menu$"),
         CallbackQueryHandler(admin_stats_callback, pattern="^adm_stats$"),
