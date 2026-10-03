@@ -115,7 +115,7 @@ def seed_default_events(data_dir):
         "emoji": "🔁",
         "title": "Повторение воскресного тренинга",
         "date": _next_weekday(today, 3).isoformat(),  # ближайший четверг
-        "time": "",
+        "time": "15:00",
         "description": "",
         "branches": ["all"],
         "repeat": "weekly",
