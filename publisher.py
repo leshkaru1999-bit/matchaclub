@@ -65,7 +65,8 @@ async def send_event_reminders(context: ContextTypes.DEFAULT_TYPE) -> int:
         print(f"Error loading events.json: {e}")
         return 0
 
-    events = data.get('events', [])
+    from events_util import expand_events
+    events = expand_events(data.get('events', []))
     if not events:
         return 0
 

@@ -644,7 +644,7 @@ const app = {
             </div>
             <div class="event-body">
                 <div class="event-title-row"><h3>${ev.emoji || '📌'} ${ev.title}</h3></div>
-                <div class="event-when">${this.formatEventWhen(ev)} · <span class="event-type-tag">${style.label}</span></div>
+                <div class="event-when">${this.formatEventWhen(ev)}${ev.recurring ? ' · 🔁' : ''} · <span class="event-type-tag">${style.label}</span></div>
                 <div class="event-branch-tag">${this.formatEventBranches(ev)}</div>
                 ${ev.description ? `<div class="event-desc">${ev.description}</div>` : ''}
             </div>

@@ -227,7 +227,9 @@ async def get_trainings():
 
 @app.get("/api/events")
 async def get_events():
-    return load_json('events.json')
+    from events_util import expand_events
+    data = load_json('events.json')
+    return {"events": expand_events(data.get('events', []))}
 
 
 @app.post("/api/quiz/submit")

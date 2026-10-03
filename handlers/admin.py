@@ -2673,6 +2673,11 @@ def format_event_when(ev):
     d = ev.get('date', '')
     parts = d.split('-')
     disp_date = f"{parts[2]}.{parts[1]}.{parts[0]}" if len(parts) == 3 else d
+    if ev.get('repeat') == 'weekly':
+        from events_util import every_label
+        when = f"🔁 {every_label(ev)}"
+        when += f" {ev['time']}" if ev.get('time') else ""
+        return f"{when} (с {disp_date})"
     return f"{disp_date} {ev['time']}" if ev.get('time') else disp_date
 
 
@@ -2780,7 +2785,17 @@ def render_event_view(idx, ev):
         f"🏢 <b>Филиал:</b> {format_event_branches(ev)}\n\n"
         f"{ev.get('description', '') or '<i>Без описания</i>'}"
     )
+    weekly = ev.get('repeat') == 'weekly'
+    if weekly and ev.get('recap'):
+        text += ("\n\n📚 <i>Название каждого занятия подставляется автоматически из тренинга, "
+                 "который прошёл в воскресенье перед ним (событие типа «Тренинг»).</i>")
+    repeat_row = [InlineKeyboardButton(
+        f"🔁 Каждую неделю: {'вкл' if weekly else 'выкл'}", callback_data=f"adm_evrep_{idx}")]
+    if weekly:
+        repeat_row.append(InlineKeyboardButton(
+            f"📚 Тема из вс: {'вкл' if ev.get('recap') else 'выкл'}", callback_data=f"adm_evrecap_{idx}"))
     buttons = InlineKeyboardMarkup([
+        repeat_row,
         [
             InlineKeyboardButton("✏️ Название", callback_data=f"adm_evedit_title_{idx}"),
             InlineKeyboardButton("✏️ Дата/время", callback_data=f"adm_evedit_date_{idx}"),
@@ -2880,6 +2895,34 @@ async def admin_event_set_type_callback(update: Update, context: ContextTypes.DE
     save_events(data)
 
     text, buttons = render_event_view(idx, events[idx])
+    await query.message.edit_text(text, parse_mode='HTML', reply_markup=buttons)
+
+
+async def admin_event_toggle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Переключить еженедельный повтор (adm_evrep_) или подстановку темы из воскресного тренинга (adm_evrecap_)."""
+    query = update.callback_query
+    if not is_admin(query.from_user):
+        await query.answer("Нет доступа!")
+        return
+    await query.answer()
+
+    is_recap = query.data.startswith("adm_evrecap_")
+    idx = int(query.data.rsplit("_", 1)[1])
+    data = load_events()
+    events = data.get('events', [])
+    if idx >= len(events):
+        return
+    ev = events[idx]
+    if is_recap:
+        ev['recap'] = not ev.get('recap')
+    elif ev.get('repeat') == 'weekly':
+        ev.pop('repeat', None)
+        ev.pop('recap', None)
+    else:
+        ev['repeat'] = 'weekly'
+    save_events(data)
+
+    text, buttons = render_event_view(idx, ev)
     await query.message.edit_text(text, parse_mode='HTML', reply_markup=buttons)
 
 
@@ -3190,6 +3233,7 @@ def get_handlers():
         CallbackQueryHandler(admin_event_branch_toggle_callback, pattern="^adm_evbr_t_"),
         CallbackQueryHandler(admin_event_branch_all_callback, pattern="^adm_evbr_all$"),
         CallbackQueryHandler(admin_event_branch_done_callback, pattern="^adm_evbr_done$"),
+        CallbackQueryHandler(admin_event_toggle_callback, pattern="^adm_evre(p|cap)_"),
         CallbackQueryHandler(admin_event_view_callback, pattern="^adm_ev_"),
         # ── Управление администраторами ──
         CallbackQueryHandler(admin_admins_callback, pattern="^adm_admins$"),

@@ -32,6 +32,15 @@ def main():
     except Exception as e:
         logger.error(f"⚠️ Не удалось обновить Академию: {e}")
 
+    # События: один раз добавляем серию «Повторение воскресного тренинга» по четвергам
+    try:
+        from config import DATA_DIR
+        from events_util import seed_default_events
+        if seed_default_events(DATA_DIR):
+            logger.info("🔁 Добавлено событие: повторение тренинга каждый четверг")
+    except Exception as e:
+        logger.error(f"⚠️ Не удалось добавить повторяющееся событие: {e}")
+
     if not BOT_TOKEN:
         logger.error("❌ BOT_TOKEN не задан в .env!")
         return
