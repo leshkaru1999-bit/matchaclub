@@ -116,6 +116,7 @@ const app = {
                 if (page === 'tour') await this.loadTour();
                 if (page === 'trainings') await this.loadTrainings();
                 if (page === 'events') await this.loadEvents();
+                if (page === 'products') await this.loadProducts();
 
                 // Плавное появление нового
                 main.style.opacity = '1';
@@ -650,6 +651,119 @@ const app = {
             </div>
         `;
         return card;
+    },
+
+    // ─── Продукты ───
+    CARB_LABELS: {
+        complex: 'Сложные углеводы',
+        fast: 'Быстрые углеводы',
+        low: 'Почти без углеводов',
+    },
+    CARB_HINTS: {
+        complex: 'Медленные углеводы: усваиваются постепенно, дают ровную энергию и долгую сытость.',
+        fast: 'Быстрые углеводы: быстро повышают сахар в крови и дают быструю энергию.',
+        low: 'Углеводов почти нет — продукт ценен белком, жирами, витаминами или вкусом.',
+    },
+
+    escapeHtml(s) {
+        return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    },
+
+    async loadProducts() {
+        const list = document.getElementById('products-list');
+        if (!list) return;
+        try {
+            if (!this.productsData) {
+                const res = await fetch(`${API_BASE}/api/products`);
+                this.productsData = await res.json();
+            }
+            this.productsFilter = { cat: 'all', q: '' };
+
+            const cats = document.getElementById('products-cats');
+            const allCats = [{ id: 'all', emoji: '🗂', name: 'Все' }, ...this.productsData.categories];
+            cats.innerHTML = allCats.map(c =>
+                `<button class="products-cat${c.id === 'all' ? ' active' : ''}" data-cat="${c.id}">${c.emoji} ${this.escapeHtml(c.name)}</button>`
+            ).join('');
+            cats.querySelectorAll('.products-cat').forEach(btn => {
+                btn.onclick = () => {
+                    tg.HapticFeedback.selectionChanged();
+                    cats.querySelectorAll('.products-cat').forEach(b => b.classList.toggle('active', b === btn));
+                    this.productsFilter.cat = btn.dataset.cat;
+                    this.renderProducts();
+                };
+            });
+
+            const search = document.getElementById('products-search');
+            search.oninput = () => {
+                this.productsFilter.q = search.value.trim().toLowerCase();
+                this.renderProducts();
+            };
+
+            this.renderProducts();
+        } catch (e) {
+            console.error('Ошибка загрузки продуктов:', e);
+            list.innerHTML = '<p class="events-empty" style="color:red;">Ошибка загрузки продуктов</p>';
+        }
+    },
+
+    renderProducts() {
+        const list = document.getElementById('products-list');
+        const { cat, q } = this.productsFilter;
+        const catName = Object.fromEntries(this.productsData.categories.map(c => [c.id, `${c.emoji} ${c.name}`]));
+        const items = this.productsData.products.filter(p => {
+            if (cat !== 'all' && p.cat !== cat) return false;
+            if (!q) return true;
+            const hay = [p.name, p.what, ...(p.rich || []), ...(p.tags || []), ...(p.dishes || [])].join(' ').toLowerCase();
+            return hay.includes(q);
+        });
+
+        if (items.length === 0) {
+            list.innerHTML = '<p class="events-empty">Ничего не найдено</p>';
+            return;
+        }
+
+        const esc = s => this.escapeHtml(s);
+        list.innerHTML = items.map(p => {
+            const warn = (p.tags || []).filter(t => t.startsWith('⚠️') || t.startsWith('Аллерген'));
+            const otherTags = (p.tags || []).filter(t => !warn.includes(t));
+            return `
+            <div class="product-card premium-card" data-id="${p.id}">
+                <div class="product-head">
+                    <div class="product-emoji">${p.emoji}</div>
+                    <div class="product-head-text">
+                        <h3>${esc(p.name)}</h3>
+                        <div class="product-rich-short">${esc((p.rich || []).slice(0, 3).join(' · '))}</div>
+                        <span class="carb-badge carb-${p.carbs}">${esc(this.CARB_LABELS[p.carbs] || '')}</span>
+                        ${warn.map(t => `<span class="carb-badge product-warn-mini">${esc(t)}</span>`).join('')}
+                    </div>
+                    <span class="product-chevron">›</span>
+                </div>
+                <div class="product-details">
+                    ${cat === 'all' ? `<div class="product-cat-label">${esc(catName[p.cat] || '')}</div>` : ''}
+                    <p class="product-what">${esc(p.what)}</p>
+                    <div class="product-section-title">Чем богат</div>
+                    <div class="product-chips">${(p.rich || []).map(r => `<span class="product-chip">${esc(r)}</span>`).join('')}</div>
+                    <div class="product-section-title">Углеводы</div>
+                    <p class="product-carbs"><span class="carb-badge carb-${p.carbs}">${esc(this.CARB_LABELS[p.carbs] || '')}</span>
+                        ${esc(this.CARB_HINTS[p.carbs] || '')}${p.carbs_note ? `<br><b>${esc(p.carbs_note)}</b>` : ''}</p>
+                    <div class="product-section-title">Ценность</div>
+                    <p>${esc(p.value)}</p>
+                    ${p.say ? `<div class="product-say"><b>Скажите гостю:</b> ${esc(p.say)}</div>` : ''}
+                    ${(warn.length || otherTags.length) ? `<div class="product-tags">
+                        ${warn.map(t => `<span class="product-tag warn">${esc(t)}</span>`).join('')}
+                        ${otherTags.map(t => `<span class="product-tag">${esc(t)}</span>`).join('')}</div>` : ''}
+                    ${(p.dishes || []).length ? `<div class="product-section-title">Где у нас (${p.dishes.length})</div>
+                        <div class="product-chips">${p.dishes.map(d => `<span class="product-chip dish">${esc(d)}</span>`).join('')}</div>` : ''}
+                </div>
+            </div>`;
+        }).join('');
+
+        list.querySelectorAll('.product-card').forEach(card => {
+            card.querySelector('.product-head').onclick = () => {
+                tg.HapticFeedback.impactOccurred('light');
+                card.classList.toggle('open');
+            };
+        });
     },
 
     async loadEvents() {

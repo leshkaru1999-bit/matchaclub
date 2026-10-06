@@ -225,6 +225,25 @@ async def get_trainings():
     return load_json('trainings.json')
 
 
+@app.get("/api/products")
+async def get_products():
+    """Справочник продуктов (content/products.json) + блюда меню, где продукт используется."""
+    import re
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'content', 'products.json')
+    with open(path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    dishes = []
+    for cat in load_json('menu.json').get('categories', []):
+        for item in cat.get('items', []):
+            text = (item.get('ingredients') or '').strip() or item.get('name', '')
+            dishes.append((item.get('name', '').strip().rstrip('.'), text.lower()))
+    for p in data['products']:
+        pats = [re.compile(r'(?<![а-яёa-z])' + m, re.I) for m in p.get('match', [])]
+        p['dishes'] = sorted({name for name, text in dishes if any(r.search(text) for r in pats)})
+        p.pop('match', None)
+    return data
+
+
 @app.get("/api/events")
 async def get_events():
     from events_util import expand_events

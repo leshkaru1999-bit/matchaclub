@@ -980,3 +980,98 @@ main {
     padding: 30px 10px;
 }
 
+
+/* ─── Products ─── */
+.products-page { display: flex; flex-direction: column; gap: 14px; padding-bottom: 20px; }
+.products-hero {
+    text-align: center;
+    padding: 24px 16px;
+    background: linear-gradient(135deg, rgba(111, 143, 78, 0.16) 0%, rgba(69, 76, 127, 0.1) 100%);
+    border-radius: 20px;
+}
+.products-hero-icon { font-size: 48px; margin-bottom: 12px; }
+.products-hero h2 { font-size: 22px; margin-bottom: 8px; }
+.products-hero p { font-size: 14px; color: var(--tg-theme-hint-color); line-height: 1.4; }
+
+.products-search {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(69, 76, 127, 0.15);
+    background: var(--card-bg);
+    color: var(--text-color);
+    font-size: 15px;
+    outline: none;
+}
+.products-search:focus { border-color: var(--primary-color); }
+
+.products-cats { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.products-cats::-webkit-scrollbar { display: none; }
+.products-cat {
+    flex: none;
+    border: 1px solid rgba(69, 76, 127, 0.15);
+    background: var(--card-bg);
+    color: var(--text-color);
+    padding: 7px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.products-cat.active { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
+
+.carb-legend { display: flex; flex-wrap: wrap; gap: 6px; }
+.carb-badge {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 8px;
+    white-space: nowrap;
+}
+.carb-complex { color: #4d7a2e; background: rgba(111, 143, 78, 0.16); }
+.carb-fast    { color: #b45309; background: rgba(245, 158, 11, 0.16); }
+.carb-low     { color: #4b5563; background: rgba(107, 114, 128, 0.14); }
+
+.products-list { display: flex; flex-direction: column; gap: 10px; }
+.product-card { padding: 14px 16px; }
+.product-head { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.product-emoji {
+    flex: none;
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    background: rgba(69, 76, 127, 0.07);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+}
+.product-head-text { flex: 1; min-width: 0; }
+.product-head-text h3 { font-size: 15px; font-weight: 600; line-height: 1.3; }
+.product-rich-short { font-size: 12px; color: var(--light-text); margin-top: 2px; line-height: 1.35; }
+.product-head-text .carb-badge { margin-top: 6px; margin-right: 4px; }
+.product-warn-mini { color: #b91c1c; background: rgba(239, 68, 68, 0.1); }
+.product-chevron { flex: none; font-size: 22px; color: var(--light-text); transition: transform 0.2s ease; }
+.product-card.open .product-chevron { transform: rotate(90deg); }
+
+.product-details { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px dashed rgba(69, 76, 127, 0.18); font-size: 13.5px; line-height: 1.55; }
+.product-card.open .product-details { display: block; }
+.product-details p { margin-bottom: 8px; }
+.product-cat-label { font-size: 11.5px; color: var(--light-text); margin-bottom: 6px; }
+.product-section-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--light-text); margin: 10px 0 6px;
+}
+.product-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.product-chip { font-size: 12px; padding: 4px 9px; border-radius: 10px; background: rgba(111, 143, 78, 0.12); }
+.product-chip.dish { background: rgba(69, 76, 127, 0.08); }
+.product-carbs .carb-badge { margin-right: 4px; }
+.product-say {
+    margin: 10px 0 4px;
+    padding: 10px 12px;
+    border-left: 3px solid #6F8F4E;
+    background: rgba(111, 143, 78, 0.1);
+    border-radius: 0 10px 10px 0;
+    font-size: 13px;
+}
+.product-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.product-tag { font-size: 11.5px; padding: 3px 8px; border-radius: 8px; background: rgba(69, 76, 127, 0.08); }
+.product-tag.warn { background: rgba(239, 68, 68, 0.1); color: #b91c1c; font-weight: 600; }
