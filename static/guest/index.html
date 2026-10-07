@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Меню — Matcha Club</title>
     <meta name="description" content="Меню Matcha Club & Mari Wellness: фото, состав и КБЖУ каждого блюда.">
-    <link rel="stylesheet" href="styles.css?v=2">
+    <link rel="stylesheet" href="styles.css?v=3">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -39,9 +39,19 @@
         </div>
     </main>
 
+    <section id="philosophy-card" class="philosophy-card hidden">
+        <p id="philosophy-text"></p>
+    </section>
+
     <footer class="site-footer">
         <img src="../img/logo_blue.png" alt="Matcha Club" class="footer-logo">
-        <p>Matcha Club &amp; Mari Wellness</p>
+        <p class="footer-title">Matcha Club &amp; Mari Wellness</p>
+        <a id="instagram-link" href="#" target="_blank" rel="noopener" class="instagram-link hidden"></a>
+
+        <div class="branches-title">Наши филиалы</div>
+        <div id="branches-list" class="branches-list"></div>
+
+        <p id="allergy-note" class="allergy-note"></p>
     </footer>
 
     <!-- Детальная карточка блюда -->
@@ -55,6 +65,10 @@
                     <h2 id="dish-modal-name"></h2>
                     <span id="dish-modal-volume" class="dish-modal-volume"></span>
                 </div>
+                <div class="dish-modal-price-row">
+                    <span id="dish-modal-price" class="dish-modal-price"></span>
+                    <span id="dish-modal-price-note" class="dish-modal-price-note"></span>
+                </div>
                 <p id="dish-modal-desc" class="dish-modal-desc"></p>
                 <div id="dish-modal-kbzhu" class="kbzhu-row"></div>
                 <p id="dish-modal-ingredients" class="dish-modal-ingredients"></p>
@@ -63,6 +77,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=2"></script>
+    <script src="app.js?v=3"></script>
 </body>
 </html>

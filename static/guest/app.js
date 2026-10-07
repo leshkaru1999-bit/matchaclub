@@ -28,6 +28,10 @@
         return stripLabel(raw, 'Ингредиенты|Состав');
     }
 
+    function formatPrice(n) {
+        return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+
     function photoInnerHtml(item, alt) {
         if (item.photo_url) {
             return `<img src="${item.photo_url}" alt="${escapeHtml(alt)}" loading="lazy">`;
@@ -45,7 +49,10 @@
             ${photoInnerHtml(item, item.name)}
             <div class="item-card-overlay">
                 <div class="item-card-name">${escapeHtml(item.name)}</div>
-                ${item.calories ? `<div class="item-card-kcal">${item.calories} ккал</div>` : ''}
+                <div class="item-card-meta-row">
+                    ${item.calories ? `<span class="item-card-kcal">${item.calories} ккал</span>` : '<span></span>'}
+                    ${item.price ? `<span class="item-card-price">${formatPrice(item.price)}</span>` : ''}
+                </div>
             </div>
         `;
         card.onclick = () => openDishModal(item);
@@ -129,6 +136,14 @@
         document.getElementById('dish-modal-name').textContent = item.name;
         document.getElementById('dish-modal-volume').textContent = item.volume || '';
 
+        const priceEl = document.getElementById('dish-modal-price');
+        priceEl.textContent = item.price ? `${formatPrice(item.price)} сум` : '';
+        priceEl.style.display = item.price ? '' : 'none';
+
+        const noteEl = document.getElementById('dish-modal-price-note');
+        noteEl.textContent = item.price_note || '';
+        noteEl.style.display = item.price_note ? '' : 'none';
+
         const desc = cleanDescription(item.description);
         const descEl = document.getElementById('dish-modal-desc');
         descEl.textContent = desc;
@@ -196,6 +211,52 @@
         }
     }
 
+    async function loadBranches() {
+        try {
+            const res = await fetch(`${API_BASE}/api/branches`);
+            const data = await res.json();
+
+            const philEl = document.getElementById('philosophy-text');
+            if (data.philosophy && philEl) {
+                philEl.textContent = data.philosophy;
+                document.getElementById('philosophy-card').classList.remove('hidden');
+            }
+
+            const allergyEl = document.getElementById('allergy-note');
+            if (data.allergy_note && allergyEl) {
+                allergyEl.textContent = '⚠️ ' + data.allergy_note;
+            }
+
+            const igEl = document.getElementById('instagram-link');
+            if (data.instagram && igEl) {
+                const handle = data.instagram.replace(/^@/, '');
+                igEl.href = `https://instagram.com/${handle}`;
+                igEl.textContent = data.instagram;
+                igEl.classList.remove('hidden');
+            }
+
+            const list = document.getElementById('branches-list');
+            if (list && Array.isArray(data.branches)) {
+                list.innerHTML = '';
+                data.branches.forEach(b => {
+                    const row = document.createElement('div');
+                    row.className = 'branch-row';
+                    const telHref = b.phone ? `tel:${b.phone}` : '#';
+                    const telDisplay = b.phone ? b.phone.replace('+998', '+998 ').replace(/(\d{2})(\d{3})(\d{2})(\d{2})$/, '$1 $2 $3 $4') : '';
+                    row.innerHTML = `
+                        <div class="branch-name">${escapeHtml(b.name)}</div>
+                        <div class="branch-address">${escapeHtml(b.address || '')}</div>
+                        ${b.phone ? `<a class="branch-phone" href="${telHref}">${escapeHtml(telDisplay)}</a>` : ''}
+                    `;
+                    list.appendChild(row);
+                });
+            }
+        } catch (e) {
+            console.error('Branches load error:', e);
+        }
+    }
+
     loadMenu();
     loadFact();
+    loadBranches();
 })();

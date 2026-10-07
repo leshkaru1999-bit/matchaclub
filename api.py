@@ -251,6 +251,11 @@ async def get_events():
     return {"events": expand_events(data.get('events', []))}
 
 
+@app.get("/api/branches")
+async def get_branches():
+    return load_json('branches.json')
+
+
 @app.post("/api/quiz/submit")
 async def submit_quiz(data: QuizSubmit, verified_user: dict = Depends(get_verified_user)):
     ensure_owner(verified_user, data.user_id)
