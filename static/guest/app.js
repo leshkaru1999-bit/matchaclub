@@ -1,10 +1,5 @@
 (function () {
     const API_BASE = '..';
-    const TYPE_LABELS = { kitchen: 'Кухня', bar: 'Бар' };
-
-    function cleanCatName(name) {
-        return (name || '').replace(/^[^\wа-яА-Я]+\s*/u, '').trim();
-    }
 
     function escapeHtml(s) {
         const div = document.createElement('div');
@@ -13,66 +8,47 @@
     }
 
     // В исходных данных иногда остаются ярлыки-заголовки вроде "Описание:\xa0"
-    // или "Ингредиенты:" (а то и просто осиротевшее ":"), скопированные из
-    // таблицы при заполнении меню. Для гостей это выглядит неряшливо — срезаем.
+    // или "Ингредиенты:"/"Состав:" (а то и просто осиротевшее ":"), скопированные
+    // из таблицы при заполнении меню. Для гостей это выглядит неряшливо — срезаем.
     function stripLabel(text, label) {
         if (!text) return text;
         const re = new RegExp(`^\\s*(?:(?:${label})\\s*:\\s*)?:?\\s*`, 'iu');
         return text.replace(re, '').trim();
     }
 
+    function cleanDescription(raw) {
+        if (!raw) return '';
+        let desc = stripLabel(raw, 'Описание');
+        const dupIdx = desc.search(/\n*\s*Состав\s*:/i);
+        if (dupIdx !== -1) desc = desc.slice(0, dupIdx).trim();
+        return desc;
+    }
+
+    function cleanIngredients(raw) {
+        return stripLabel(raw, 'Ингредиенты|Состав');
+    }
+
+    function photoInnerHtml(item, alt) {
+        if (item.photo_url) {
+            return `<img src="${item.photo_url}" alt="${escapeHtml(alt)}" loading="lazy">`;
+        }
+        return `<span class="item-photo-placeholder">🍽️</span>`;
+    }
+
     function renderItemCard(item) {
         const card = document.createElement('div');
         card.className = 'item-card';
 
-        let photoHtml = '';
-        if (item.photo_url) {
-            photoHtml = `<img src="${item.photo_url}" alt="${escapeHtml(item.name)}" loading="lazy">`;
-        } else {
-            photoHtml = `<span class="item-photo-placeholder">🍽️</span>`;
-        }
-
-        let html = `
-            <div class="item-photo-wrap">
-                ${photoHtml}
-                ${item.is_hit ? '<div class="hit-badge">🔥 Хит</div>' : ''}
+        card.innerHTML = `
+            ${item.is_hit ? '<div class="hit-badge">🔥 Хит</div>' : ''}
+            <div class="zoom-hint">＋</div>
+            ${photoInnerHtml(item, item.name)}
+            <div class="item-card-overlay">
+                <div class="item-card-name">${escapeHtml(item.name)}</div>
+                ${item.calories ? `<div class="item-card-kcal">${item.calories} ккал</div>` : ''}
             </div>
-            <div class="item-info">
-                <div class="item-name-row">
-                    <span class="item-name">${escapeHtml(item.name)}</span>
-                    ${item.volume ? `<span class="item-volume">${escapeHtml(item.volume)}</span>` : ''}
-                </div>
         `;
-
-        if (item.description) {
-            let desc = stripLabel(item.description, 'Описание');
-            const dupIdx = desc.search(/\n*\s*Состав\s*:/i);
-            if (dupIdx !== -1) desc = desc.slice(0, dupIdx).trim();
-            if (desc) html += `<p class="item-desc">${escapeHtml(desc)}</p>`;
-        }
-
-        if (item.ingredients) {
-            const ingr = stripLabel(item.ingredients, 'Ингредиенты|Состав');
-            if (ingr) html += `<p class="item-ingredients"><b>Состав:</b> ${escapeHtml(ingr)}</p>`;
-        }
-
-        if (item.calories) {
-            html += `
-                <div class="kbzhu-row">
-                    <span class="kbzhu-pill">${item.calories} ккал</span>
-                    <span class="kbzhu-pill">Б ${item.protein ?? 0} г</span>
-                    <span class="kbzhu-pill">Ж ${item.fat ?? 0} г</span>
-                    <span class="kbzhu-pill">У ${item.carbs ?? 0} г</span>
-                </div>
-            `;
-        }
-
-        if (item.allergens) {
-            html += `<span class="item-allergens">⚠️ Аллергены: ${escapeHtml(item.allergens)}</span>`;
-        }
-
-        html += `</div>`;
-        card.innerHTML = html;
+        card.onclick = () => openDishModal(item);
         return card;
     }
 
@@ -101,9 +77,10 @@
                 section.className = 'menu-section';
                 section.id = `cat-${cat.id}`;
 
-                const h2 = document.createElement('h2');
-                h2.textContent = cat.name;
-                section.appendChild(h2);
+                const head = document.createElement('div');
+                head.className = 'menu-section-head';
+                head.innerHTML = `<h2>${escapeHtml(cat.name)}</h2><span class="count">${cat.items.length}</span>`;
+                section.appendChild(head);
 
                 const grid = document.createElement('div');
                 grid.className = 'item-grid';
@@ -132,11 +109,60 @@
             entries.forEach(entry => {
                 if (entry.isIntersecting) setActive(entry.target.id);
             });
-        }, { rootMargin: '-120px 0px -70% 0px', threshold: 0 });
+        }, { rootMargin: '-130px 0px -70% 0px', threshold: 0 });
 
         sections.forEach(s => observer.observe(s));
         setActive(sections[0].id);
     }
+
+    function openDishModal(item) {
+        const modal = document.getElementById('dish-modal');
+
+        document.getElementById('dish-modal-photo').innerHTML = photoInnerHtml(item, item.name);
+        document.getElementById('dish-modal-name').textContent = item.name;
+        document.getElementById('dish-modal-volume').textContent = item.volume || '';
+
+        const desc = cleanDescription(item.description);
+        const descEl = document.getElementById('dish-modal-desc');
+        descEl.textContent = desc;
+        descEl.style.display = desc ? '' : 'none';
+
+        const kbzhuEl = document.getElementById('dish-modal-kbzhu');
+        if (item.calories) {
+            kbzhuEl.innerHTML = `
+                <span class="kbzhu-pill">${item.calories} ккал</span>
+                <span class="kbzhu-pill">Б ${item.protein ?? 0} г</span>
+                <span class="kbzhu-pill">Ж ${item.fat ?? 0} г</span>
+                <span class="kbzhu-pill">У ${item.carbs ?? 0} г</span>
+            `;
+            kbzhuEl.style.display = '';
+        } else {
+            kbzhuEl.innerHTML = '';
+            kbzhuEl.style.display = 'none';
+        }
+
+        const ingr = cleanIngredients(item.ingredients);
+        const ingrEl = document.getElementById('dish-modal-ingredients');
+        ingrEl.innerHTML = ingr ? `<b>Состав:</b> ${escapeHtml(ingr)}` : '';
+        ingrEl.style.display = ingr ? '' : 'none';
+
+        const allergensEl = document.getElementById('dish-modal-allergens');
+        allergensEl.textContent = item.allergens ? `⚠️ Аллергены: ${item.allergens}` : '';
+
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeDishModal() {
+        document.getElementById('dish-modal').classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    document.getElementById('dish-modal-close').onclick = closeDishModal;
+    document.querySelector('.dish-modal-backdrop').onclick = closeDishModal;
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeDishModal();
+    });
 
     async function loadMenu() {
         try {
