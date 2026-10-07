@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Меню — Matcha Club</title>
+    <meta name="description" content="Меню Matcha Club & Mari Wellness: состав, КБЖУ и интересные факты о каждом блюде.">
+    <link rel="stylesheet" href="styles.css?v=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header id="site-header">
+        <img src="../img/logo_blue.png" alt="Matcha Club" class="site-logo">
+    </header>
+
+    <main id="main">
+        <section class="hero">
+            <h1>Меню Matcha Club</h1>
+            <p>Пространство здорового образа жизни, гастрономии и атмосферы.<br>Состав, калорийность и БЖУ — у каждого блюда.</p>
+        </section>
+
+        <section id="fact-card" class="fact-card hidden">
+            <div class="fact-icon">💡</div>
+            <div>
+                <div class="fact-label">Знаете ли вы?</div>
+                <div id="fact-text" class="fact-text">Загрузка...</div>
+            </div>
+        </section>
+
+        <nav id="cat-nav" class="cat-nav">
+            <div id="cat-nav-inner" class="cat-nav-inner"></div>
+        </nav>
+
+        <div id="menu-root">
+            <div class="loader"><div class="spinner"></div><p>Загружаем меню...</p></div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <img src="../img/logo_blue.png" alt="Matcha Club" class="footer-logo">
+        <p>Matcha Club &amp; Mari Wellness</p>
+    </footer>
+
+    <script src="app.js?v=1"></script>
+</body>
+</html>

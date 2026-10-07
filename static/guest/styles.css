@@ -1,0 +1,226 @@
+:root {
+    --bg-color: #FFF9E9;
+    --primary-color: #454C7F;
+    --dark-color: #292D4C;
+    --text-color: #292D4C;
+    --light-text: #6b7280;
+    --card-bg: #ffffff;
+    --border-color: rgba(69, 76, 127, 0.1);
+    --shadow-soft: 0 8px 28px rgba(69, 76, 127, 0.08);
+    --matcha-green: #6F8F4E;
+    --radius: 18px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html { scroll-behavior: smooth; }
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 { font-family: 'Outfit', sans-serif; font-weight: 700; color: var(--dark-color); }
+
+#site-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgba(255, 249, 233, 0.92);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-color);
+    padding: 14px 20px;
+    display: flex;
+    justify-content: center;
+}
+.site-logo { height: 32px; width: auto; }
+
+main { max-width: 720px; margin: 0 auto; padding: 24px 16px 60px; }
+
+.hero { text-align: center; padding: 10px 6px 24px; }
+.hero h1 { font-size: 26px; margin-bottom: 10px; }
+.hero p { font-size: 14px; color: var(--light-text); line-height: 1.6; }
+
+.fact-card {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    background: linear-gradient(135deg, rgba(111, 143, 78, 0.12), rgba(69, 76, 127, 0.08));
+    border: 1px solid rgba(111, 143, 78, 0.25);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-bottom: 24px;
+}
+.fact-card.hidden { display: none; }
+.fact-icon { font-size: 26px; line-height: 1; }
+.fact-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--matcha-green);
+    margin-bottom: 4px;
+}
+.fact-text { font-size: 14.5px; line-height: 1.5; }
+
+.cat-nav {
+    position: sticky;
+    top: 60px;
+    z-index: 15;
+    background: rgba(255, 249, 233, 0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    margin: 0 -16px 20px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+.cat-nav-inner {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 2px 16px;
+    scrollbar-width: none;
+}
+.cat-nav-inner::-webkit-scrollbar { display: none; }
+.cat-chip {
+    flex: none;
+    white-space: nowrap;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.cat-chip.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #fff;
+}
+
+.cat-group-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--light-text);
+    margin: 22px 4px 8px;
+}
+.cat-group-title:first-child { margin-top: 0; }
+
+.menu-section { margin-bottom: 8px; scroll-margin-top: 120px; }
+.menu-section h2 { font-size: 19px; margin: 26px 4px 12px; }
+.menu-section:first-of-type h2 { margin-top: 4px; }
+
+.item-grid { display: flex; flex-direction: column; gap: 14px; }
+
+.item-card {
+    display: flex;
+    gap: 14px;
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 14px;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--border-color);
+}
+.item-photo-wrap {
+    flex: none;
+    width: 96px;
+    height: 96px;
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+    background: linear-gradient(135deg, rgba(111,143,78,0.15), rgba(69,76,127,0.1));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.item-photo-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.item-photo-placeholder { font-size: 30px; opacity: 0.5; }
+.hit-badge {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    background: linear-gradient(135deg, #ff4b2b, #ff416c);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 8px;
+}
+
+.item-info { flex: 1; min-width: 0; }
+.item-name-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 3px;
+}
+.item-name { font-size: 15.5px; font-weight: 700; color: var(--dark-color); }
+.item-volume { font-size: 12px; color: var(--light-text); }
+.item-desc { font-size: 13px; color: var(--light-text); line-height: 1.45; margin-bottom: 6px; }
+.item-ingredients {
+    font-size: 12.5px;
+    color: var(--text-color);
+    line-height: 1.45;
+    margin-bottom: 8px;
+}
+.item-ingredients b { color: var(--primary-color); font-weight: 600; }
+
+.kbzhu-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.kbzhu-pill {
+    font-size: 11.5px;
+    font-weight: 600;
+    background: rgba(69, 76, 127, 0.08);
+    color: var(--primary-color);
+    padding: 3px 9px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+
+.item-allergens {
+    font-size: 11.5px;
+    color: #a16207;
+    background: rgba(234, 179, 8, 0.1);
+    padding: 4px 8px;
+    border-radius: 8px;
+    display: inline-block;
+}
+
+.loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 0;
+    color: var(--light-text);
+}
+.spinner {
+    width: 36px; height: 36px;
+    border: 4px solid rgba(69, 76, 127, 0.15);
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 14px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.site-footer {
+    text-align: center;
+    padding: 30px 16px 40px;
+    color: var(--light-text);
+    font-size: 13px;
+}
+.footer-logo { height: 24px; opacity: 0.6; margin-bottom: 8px; }
+
+@media (max-width: 380px) {
+    .item-photo-wrap { width: 76px; height: 76px; }
+}
