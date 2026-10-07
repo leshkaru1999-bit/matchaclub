@@ -574,7 +574,8 @@ async def admin_edit_item_callback(update: Update, context: ContextTypes.DEFAULT
         f"<b>Аллергены:</b> {item.get('allergens', '—')}\n"
         f"<b>Время готовки:</b> {item.get('prep_time', '—')}\n"
         f"<b>Аудио-гид:</b> {'Есть 🎙' if item.get('audio') else 'Нет'}\n"
-        f"<b>Хит продаж:</b> {'Да 🔥' if item.get('is_hit') else 'Нет'}\n\n"
+        f"<b>Хит продаж:</b> {'Да 🔥' if item.get('is_hit') else 'Нет'}\n"
+        f"<b>Видно гостям:</b> {'Нет 🙈' if item.get('hidden_from_guest') else 'Да'}\n\n"
         f"Выбери, что хочешь изменить:"
     )
 
@@ -598,6 +599,12 @@ async def admin_edit_item_callback(update: Update, context: ContextTypes.DEFAULT
         [
             InlineKeyboardButton("⏱ Время готовки", callback_data=f"adm_edf_prep_{cat_id}_{item_idx}"),
             InlineKeyboardButton("🎙 Аудио-гид", callback_data=f"adm_edf_audio_{cat_id}_{item_idx}")
+        ],
+        [
+            InlineKeyboardButton(
+                f"🙈 Видно гостям: {'Нет' if item.get('hidden_from_guest') else 'Да'}",
+                callback_data=f"adm_edf_guest_{cat_id}_{item_idx}"
+            )
         ],
         [InlineKeyboardButton("🔙 Назад", callback_data=f"adm_mitem_{cat_id}")]
     ]
@@ -625,15 +632,18 @@ async def admin_edit_field_callback(update: Update, context: ContextTypes.DEFAUL
     context.user_data['edit_item_idx'] = item_idx
     context.user_data['edit_field'] = field
 
-    if field == 'hit':
+    if field in ('hit', 'guest'):
         context.user_data['awaiting_edit'] = False
         data = load_menu()
         category = next((c for c in data['categories'] if c['id'] == cat_id), None)
         if category and item_idx < len(category['items']):
             item = category['items'][item_idx]
-            item['is_hit'] = not item.get('is_hit', False)
+            if field == 'hit':
+                item['is_hit'] = not item.get('is_hit', False)
+            else:
+                item['hidden_from_guest'] = not item.get('hidden_from_guest', False)
             save_menu(data)
-            
+
             # Рендерим обновленную карточку сразу
             text = (
                 f"✏️ <b>Редактирование блюда</b>\n\n"
@@ -644,7 +654,8 @@ async def admin_edit_field_callback(update: Update, context: ContextTypes.DEFAUL
                 f"<b>КБЖУ:</b> {item.get('calories', 0)}/{item.get('protein', 0)}/{item.get('fat', 0)}/{item.get('carbs', 0)}\n"
                 f"<b>Аллергены:</b> {item.get('allergens', '—')}\n"
                 f"<b>Время готовки:</b> {item.get('prep_time', '—')}\n"
-                f"<b>Хит продаж:</b> {'Да 🔥' if item.get('is_hit') else 'Нет'}\n\n"
+                f"<b>Хит продаж:</b> {'Да 🔥' if item.get('is_hit') else 'Нет'}\n"
+                f"<b>Видно гостям:</b> {'Нет 🙈' if item.get('hidden_from_guest') else 'Да'}\n\n"
                 f"Выбери, что хочешь изменить:"
             )
             buttons = [
@@ -666,6 +677,12 @@ async def admin_edit_field_callback(update: Update, context: ContextTypes.DEFAUL
                 ],
                 [
                     InlineKeyboardButton("⏱ Время готовки", callback_data=f"adm_edf_prep_{cat_id}_{item_idx}")
+                ],
+                [
+                    InlineKeyboardButton(
+                        f"🙈 Видно гостям: {'Нет' if item.get('hidden_from_guest') else 'Да'}",
+                        callback_data=f"adm_edf_guest_{cat_id}_{item_idx}"
+                    )
                 ],
                 [InlineKeyboardButton("🔙 Назад", callback_data=f"adm_mitem_{cat_id}")]
             ]

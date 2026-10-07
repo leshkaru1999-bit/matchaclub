@@ -58,12 +58,19 @@
         root.innerHTML = '';
         navInner.innerHTML = '';
 
+        // Некоторые позиции сняты с публичной витрины (hidden_from_guest), но
+        // остаются в боте для сотрудников — гостям их показывать не нужно.
+        const visible = (items) => items.filter(it => !it.hidden_from_guest);
+
         const order = ['kitchen', 'bar'];
         const grouped = order.map(t => ({ type: t, cats: categories.filter(c => c.type === t) }))
             .filter(g => g.cats.length > 0);
 
         grouped.forEach(group => {
             group.cats.forEach(cat => {
+                const items = visible(cat.items);
+                if (items.length === 0) return;
+
                 const chip = document.createElement('button');
                 chip.className = 'cat-chip';
                 chip.textContent = cat.name;
@@ -79,12 +86,12 @@
 
                 const head = document.createElement('div');
                 head.className = 'menu-section-head';
-                head.innerHTML = `<h2>${escapeHtml(cat.name)}</h2><span class="count">${cat.items.length}</span>`;
+                head.innerHTML = `<h2>${escapeHtml(cat.name)}</h2><span class="count">${items.length}</span>`;
                 section.appendChild(head);
 
                 const grid = document.createElement('div');
                 grid.className = 'item-grid';
-                cat.items.forEach(item => grid.appendChild(renderItemCard(item)));
+                items.forEach(item => grid.appendChild(renderItemCard(item)));
                 section.appendChild(grid);
 
                 root.appendChild(section);
