@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>План тренинга — Школа wellness-питания</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Manrope:wght@400;500;600;700&display=block" rel="stylesheet">
+<style>
+:root{--brand:#454C7F;--ink:#292D4C;--cream:#FFF9E9;--paper:#FFFDF6;--matcha:#6F8F4E;--matcha-soft:#E9EEDB;
+--brand-soft:#E6E7F1;--line:#E6DEC6;--muted:#6C6F8C;--red:#A5483F;--red-soft:#F6E4DF}
+@page{size:A4;margin:14mm 14mm 16mm;background:#FFF9E9;
+ @bottom-left{content:"Академия Matcha Club · План тренинга";font:6.5pt 'Manrope',sans-serif;color:#6C6F8C;letter-spacing:.14em;text-transform:uppercase}
+ @bottom-right{content:counter(page);font:7pt 'Manrope',sans-serif;color:#6C6F8C}}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--cream)}
+body{font-family:'Manrope',Arial,sans-serif;color:var(--ink);font-size:8.6pt;line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+h1,h2,h3{font-family:'Cormorant Garamond',Georgia,serif;font-weight:700;color:var(--brand)}
+b{font-weight:700}
+.page{break-after:page}
+.page:last-child{break-after:auto}
+/* шапка */
+.hero{background:var(--brand);color:var(--cream);border-radius:5mm;padding:8mm 8mm 7mm}
+.hero .k{font-size:6.5pt;letter-spacing:.24em;text-transform:uppercase;opacity:.8;margin-bottom:2mm}
+.hero h1{color:var(--cream);font-size:27pt;line-height:1.05;margin-bottom:5mm}
+.facts{display:grid;grid-template-columns:repeat(4,1fr);gap:2.5mm}
+.fact{background:rgba(255,249,233,.12);border-radius:2.5mm;padding:2.5mm 3mm}
+.fact b{display:block;font-size:10pt;line-height:1.25}
+.fact span{font-size:7pt;opacity:.8}
+h2.sec{font-size:16pt;margin:4.5mm 0 1.5mm}
+/* тайминг */
+table{width:100%;border-collapse:collapse}
+.timing th{font-size:6pt;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:left;font-weight:600;padding:1.5mm 1.5mm;border-bottom:1px solid var(--line)}
+.timing td{padding:1.6mm 1.5mm;border-bottom:1px solid var(--line);vertical-align:top;font-size:7.8pt}
+.timing td:first-child{color:var(--matcha);font-weight:700;white-space:nowrap}
+.timing td:nth-child(2){font-weight:700;width:30mm}
+.timing td:last-child{color:var(--muted);width:24mm}
+.timing tr.hl td{background:var(--matcha-soft)}
+.timing tr.brk td{background:var(--brand-soft);font-weight:600}
+.prep{margin-top:4mm;background:var(--red-soft);border-radius:3mm;padding:3mm 4mm;font-size:7.8pt}
+/* блоки сценария */
+h1.big{font-size:21pt;margin-bottom:3mm}
+.block{background:var(--paper);border:1px solid var(--line);border-radius:3.5mm;padding:4mm 4.5mm;margin-bottom:3.5mm;break-inside:avoid}
+.block.split{break-inside:auto}
+.bh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1.5mm}
+.bh h3{font-size:13pt}
+.bh .t{color:var(--matcha);font-weight:700;font-size:7.5pt;white-space:nowrap}
+.block p{margin-bottom:1.6mm}
+.q{border-left:3px solid var(--matcha);background:var(--matcha-soft);padding:2mm 3.5mm;border-radius:0 2.5mm 2.5mm 0;margin:2mm 0;font-style:italic}
+.list{margin:1.5mm 0}
+.list.two{display:grid;grid-template-columns:1fr 1fr;column-gap:6mm}
+.list.two .it{border-bottom:1px solid var(--line)!important}
+.list.two .it .tag{white-space:normal;text-align:right;font-weight:600}
+.list .it{display:grid;grid-template-columns:1fr auto;gap:3mm;padding:1.6mm 0;border-bottom:1px solid var(--line);break-inside:avoid}
+.list .it:last-child{border-bottom:0}
+.list .it small{display:block;color:var(--muted);font-size:7pt;margin-top:.5mm}
+.tag{font-weight:700;font-size:7.5pt;white-space:nowrap}
+.tag.g{color:var(--matcha)}.tag.r{color:var(--red)}.tag.b{color:var(--brand)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:3mm}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3mm}
+.col h4{font-size:7pt;letter-spacing:.12em;text-transform:uppercase;margin-bottom:1mm}
+.col h4.g{color:var(--matcha)}.col h4.r{color:var(--red)}.col h4.b{color:var(--brand)}
+.col ol,.col ul,.block ul,.block ol{margin-left:4.5mm}
+.col li,.block li{margin-bottom:.8mm}
+.kv th{font-size:6pt;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-align:left;font-weight:600;padding:1.2mm 1.5mm;border-bottom:1px solid var(--line)}
+.kv td{padding:1.6mm 1.5mm;border-bottom:1px solid var(--line);vertical-align:top}
+.kv td:first-child{font-weight:600;width:44%}
+.note{font-size:7.3pt;color:var(--muted);margin-top:1.5mm}
+.warn{background:var(--red-soft);border-radius:2.5mm;padding:2.2mm 3mm;margin-top:2mm;font-size:7.8pt}
+/* раздатка */
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:2mm;margin-bottom:2mm}
+.cards.c3{grid-template-columns:repeat(3,1fr)}
+.card{border:1px dashed #BDB394;border-radius:2.5mm;padding:2.5mm 3mm;min-height:10mm;background:var(--paper);font-size:7.8pt;break-inside:avoid}
+.card b{display:block;font-size:8.6pt;margin-bottom:.5mm}
+.card small{color:var(--muted);font-size:6.8pt}
+.sheet th{font-size:6pt;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-align:left;font-weight:600;padding:1.5mm;border-bottom:1px solid var(--ink)}
+.sheet td{padding:2.6mm 1.5mm;border-bottom:1px solid var(--line)}
+.foot{font-size:6.5pt;letter-spacing:.2em;text-transform:uppercase;color:var(--matcha);font-weight:700;margin-top:2mm}
+</style>
+</head>
+<body>
+
+<!-- =============== СТР. 1: ОБЗОР =============== -->
+<section class="page">
+  <div class="hero">
+    <div class="k">План тренинга · Тренинг 2</div>
+    <h1>Школа wellness-питания</h1>
+    <div class="facts">
+      <div class="fact"><b>90 минут</b><span>с перерывом 5 мин</span></div>
+      <div class="fact"><b>Кассиры, бармены, официанты</b><span>вся смена вместе</span></div>
+      <div class="fact"><b>3 команды</b><span>по 2–4 человека</span></div>
+      <div class="fact"><b>Формат</b><span>игры, дегустации, сортировки, ролевки</span></div>
+    </div>
+  </div>
+
+  <h2 class="sec">Цель тренинга</h2>
+  <p>По Welcome Book, глава 03 «Наша кухня и ингредиенты» (+ карта гостя, глава 02). После тренинга каждый сотрудник:
+  знает, чем мы заменяем пшеничную муку, сахар и коровье молоко, и объясняет это одной фразой; без подсказки называет подсластитель
+  любого десерта; отличает «без глютена» от «уточнить у кухни»; знает, почему безлактозное молоко не подходит веганам; говорит о пользе
+  фактами — без медицинских обещаний.</p>
+
+  <h2 class="sec">Тайминг</h2>
+  <table class="timing">
+    <tr><th>Время</th><th>Блок</th><th>Что происходит</th><th>Формат</th></tr>
+    <tr class="hl"><td>0:00–0:08</td><td>Разминка «Мяч-ингредиент»</td><td>Круг, мяч. Тренер называет ингредиент — поймавший за 5 секунд говорит одну фразу для гостя</td><td>Игра, все вместе</td></tr>
+    <tr><td>0:08–0:15</td><td>Эксперт, а не врач (модуль 1)</td><td>Игра «Светофор»: команды поднимают зелёную или красную карточку — можно ли так сказать гостю</td><td>Команды, баллы</td></tr>
+    <tr><td>0:15–0:25</td><td>Белки, жиры, углеводы (2)</td><td>«Собери боул»: из карточек ингредиентов собрать сбалансированное блюдо по формуле</td><td>Команды, на время</td></tr>
+    <tr><td>0:25–0:37</td><td>Сахар и чем мы его заменяем (3)</td><td>«Три банки»: разложить позиции меню по подсластителю — стевия / агава / мёд</td><td>Команды, на время</td></tr>
+    <tr><td>0:37–0:50</td><td>Глютен (4)</td><td>«Глютеновый патруль»: сортировка в 3 зоны + сценка «У меня целиакия»</td><td>Команды + сценка</td></tr>
+    <tr class="brk"><td>0:50–0:55</td><td colspan="3">Перерыв — дегустация: десерт на стевии и десерт на агаве. Попробовать то, что продаём</td></tr>
+    <tr class="hl"><td>0:55–1:07</td><td>Лактоза и молоко (5)</td><td>Слепая дегустация 5 видов молока + ловушка «веган и безлактозное»</td><td>Команды, баллы</td></tr>
+    <tr><td>1:07–1:15</td><td>Белок и суперфуды (6–7)</td><td>«Белковая лестница»: выстроить позиции по количеству белка + фраза-формула про суперфуд</td><td>Команды, на время</td></tr>
+    <tr><td>1:15–1:23</td><td>Мифы о питании (8)</td><td>«Не спорь с гостем»: гость с мифом — сотрудник мягко объясняет, как на самом деле</td><td>Пары, ротация</td></tr>
+    <tr><td>1:23–1:30</td><td>Итог</td><td>Блиц из 6 вопросов, подсчёт баллов, каждый называет 1 ингредиент и фразу о нём, домашнее задание</td><td>Круг</td></tr>
+  </table>
+
+  <div class="prep"><b>Подготовить заранее:</b> мяч или мягкую игрушку · по 2 карточки «Светофор» на команду (зелёная / красная) ·
+  распечатанные и разрезанные карточки и бланки (стр. 7–8) · 3 подписанные коробки/банки «Стевия», «Агава», «Мёд» · 3 зоны на столе:
+  «Без глютена», «Есть глютен», «Уточнить у кухни» · 5 видов молока в одинаковых стаканчиках с номерами 1–5 ·
+  десерты для перерыва (Тирамису или Чизкейк Зебра + Протеиновый чизкейк или Красный бархат), нарезанные на кусочки ·
+  телефоны с ботом Matcha Club · таблицу баллов · приз команде-победителю.
+  <br><b>До тренинга уточнить у кухни</b> состав позиций из зоны «Уточнить у кухни» (стр. 4) — чтобы на разборе дать точный ответ.</div>
+</section>
+
+<!-- =============== СТР. 2 =============== -->
+<section class="page">
+  <h1 class="big">Подробный сценарий</h1>
+
+  <div class="block">
+    <div class="bh"><h3>Разминка «Мяч-ингредиент»</h3><span class="t">0:00–0:08</span></div>
+    <p>Все встают в круг. Тренер бросает мяч и называет ингредиент. Поймавший за 5 секунд говорит <b>одну фразу для гостя</b>
+    (Welcome Book, стр. 15–16) и бросает мяч обратно. Не успел — мяч «горит», отвечает сосед. Цель — разогреться и проверить словарь.</p>
+    <div class="list two">
+      <div class="it"><span>Гречневая мука</span><span class="tag b">без глютена, больше белка и клетчатки</span></div>
+      <div class="it"><span>Рисовая мука</span><span class="tag b">лёгкая, нейтральная, без глютена</span></div>
+      <div class="it"><span>Миндальная мука</span><span class="tag b">мало углеводов, белок, витамин Е · орехи!</span></div>
+      <div class="it"><span>Сертифицированная овсянка</span><span class="tag b">безглютеновая, долгая сытость</span></div>
+      <div class="it"><span>Кокосовое молоко</span><span class="tag b">без лактозы, сливочная текстура</span></div>
+      <div class="it"><span>Овсяное молоко</span><span class="tag b">мягкое, отлично взбивается</span></div>
+      <div class="it"><span>Соевое молоко</span><span class="tag b">самое белковое из растительных</span></div>
+      <div class="it"><span>Банановое молоко</span><span class="tag b">натуральная сладость, сахар не нужен</span></div>
+      <div class="it"><span>Семена чиа</span><span class="tag b">омега-3, клетчатка, сытость</span></div>
+      <div class="it"><span>Киноа</span><span class="tag b">без глютена, полноценный растительный белок</span></div>
+      <div class="it"><span>Зелёная гречка</span><span class="tag b">не обжарена — сохраняет больше пользы</span></div>
+      <div class="it"><span>Имбирь и куркума</span><span class="tag b">тонус и поддержка иммунитета</span></div>
+      <div class="it"><span>Шиповник</span><span class="tag b">один из лучших источников витамина C</span></div>
+      <div class="it"><span>Ходзича</span><span class="tag b">обжаренный зелёный чай, мало кофеина</span></div>
+    </div>
+    <p>После игры делим на 3 команды (рассчитаться «стевия — агава — мёд»). Команды остаются до конца, баллы копятся.</p>
+  </div>
+
+  <div class="block">
+    <div class="bh"><h3>Эксперт, а не врач · игра «Светофор»</h3><span class="t">0:08–0:15</span></div>
+    <div class="q">«Мы эксперты по нашему продукту, а не врачи. Говорим факт о продукте — не обещаем результат для организма».</div>
+    <p>Тренер читает фразу. Команды одновременно поднимают карточку: <b>зелёная</b> — так говорим, <b>красная</b> — так не говорим.
+    1 балл за верный цвет, ещё 1 балл — если команда переделала «красную» фразу в правильную.</p>
+    <div class="list">
+      <div class="it"><span>«Этот смузи поможет вам похудеть»<small>→ «В нём 19 г белка и нет сахара — сытно и сбалансированно»</small></span><span class="tag r">красная</span></div>
+      <div class="it"><span>«Тирамису на стевии, без пшеничной муки»</span><span class="tag g">зелёная</span></div>
+      <div class="it"><span>«Этот десерт можно при диабете»<small>→ «Он на стевии. Если у вас диабет — ориентируйтесь на рекомендации врача»</small></span><span class="tag r">красная</span></div>
+      <div class="it"><span>«Шиповник — один из самых богатых источников витамина C»</span><span class="tag g">зелёная</span></div>
+      <div class="it"><span>«Это ПП, не толстит»<small>→ «Сбалансированное: на гречневой муке, без сахара»</small></span><span class="tag r">красная</span></div>
+      <div class="it"><span>«Имбирный шот вылечит простуду»<small>→ «Имбирь и куркума — для тонуса и поддержки иммунитета»</small></span><span class="tag r">красная</span></div>
+      <div class="it"><span>«Детокс-фреш выводит токсины»<small>→ «Свежие овощи и фрукты, без сахара»</small></span><span class="tag r">красная</span></div>
+      <div class="it"><span>«В Протеиновом чизкейке 16 г белка, подслащён агавой»</span><span class="tag g">зелёная</span></div>
+    </div>
+    <p class="note">Правило: «поддерживает», «богат», «источник» — да. «Лечит», «выводит токсины», «сжигает жир», «похудеете» — нет.</p>
+  </div>
+
+  <div class="block">
+    <div class="bh"><h3>«Собери боул» · белки, жиры, углеводы</h3><span class="t">0:15–0:25</span></div>
+    <p><b>Мини-лекция (3 мин).</b> КБЖУ — калории, белки, жиры, углеводы. Цифры по каждому блюду — в карточке меню в боте.</p>
+    <div class="grid2">
+      <div class="col"><ul>
+        <li><b>Белки</b> — строительный материал, долгая сытость.</li>
+        <li><b>Жиры</b> — для гормонов, мозга, усвоения витаминов.</li>
+      </ul></div>
+      <div class="col"><ul>
+        <li><b>Углеводы</b> — энергия. Медленные — ровная, быстрые — скачок и спад.</li>
+        <li><b>Клетчатка</b> — пищеварение и сытость.</li>
+      </ul></div>
+    </div>
+    <div class="q">Сбалансированное блюдо = белок + полезный жир + медленные углеводы + овощи</div>
+    <p><b>Игра (5 мин).</b> Каждая команда получает набор карточек ингредиентов (стр. 7). Задача — собрать один сбалансированный боул и
+    подписать, что в нём белок, жир, медленные углеводы и овощи. В наборе есть «ловушки» — быстрые углеводы.</p>
+    <p><b>Разбор (2 мин).</b> По 1 баллу за каждую верно закрытую группу (макс. 4), минус 1 — за «ловушку» в боуле. Бонус +1 команде, которая
+    назовёт <b>похожий боул из нашего меню</b> (Боул с тунцом: тунец + киноа + авокадо + эдамаме, черри).</p>
+  </div>
+
+  <div class="block">
+    <div class="bh"><h3>«Три банки» · сахар и чем мы его заменяем</h3><span class="t">0:25–0:37</span></div>
+    <p><b>Мини-лекция (3 мин).</b> Сахар мы не используем совсем.</p>
+    <table class="kv">
+      <tr><th>Подсластитель</th><th>Что сказать гостю</th></tr>
+      <tr><td>Стевия · 0 ккал, не повышает сахар в крови, в 200–300 раз слаще сахара</td><td>«Этот десерт на стевии — ноль калорий от подсластителя и никаких скачков сахара»</td></tr>
+      <tr><td>Сироп агавы · низкий ГИ, но калорий примерно как в сахаре</td><td>«Подслащено сиропом агавы — у него низкий гликемический индекс, сладость мягкая»</td></tr>
+      <tr><td>Натуральный мёд · природный продукт · аллерген!</td><td>«Здесь натуральный мёд вместо сахара»</td></tr>
+    </table>
+    <p style="margin-top:2mm"><b>Игра (5 мин).</b> Команды по очереди (по 1 минуте) тянут карточки позиций (стр. 7) и кладут в банку «Стевия», «Агава» или «Мёд».
+    Можно проверять в боте, но время идёт. 1 балл за верную карточку.</p>
+    <div class="grid3">
+      <div class="col"><h4 class="g">Стевия</h4><ul><li>Чизкейк Зебра</li><li>Тирамису</li><li>Матча-фисташка</li><li>Шоколадно-сливочный</li><li>Шиповник Diet</li></ul></div>
+      <div class="col"><h4 class="b">Сироп агавы</h4><ul><li>Каша из овса</li><li>Красный бархат</li><li>Протеиновый чизкейк</li><li>Матча клубника, Матча банан</li><li>Лимонады</li></ul></div>
+      <div class="col"><h4 class="r">Мёд</h4><ul><li>Печенье на рисовой и гречневой муке</li><li>Йогурт-боул</li><li>Смузи Berry Coconut Cream</li><li>Витаминная вода Honey</li></ul></div>
+    </div>
+    <p style="margin-top:2mm"><b>Трудный вопрос (3 мин).</b> Тренер-«гость»: <i>«Агава — это же тоже сахар?»</i> Каждая команда даёт ответ, лучший — +2 балла.</p>
+    <div class="q">«Это натуральный сироп. Он слаще сахара, поэтому его нужно меньше, и у него низкий гликемический индекс — сахар в крови поднимается мягче.
+    Если хотите совсем без калорий от сладкого — посоветую десерт на стевии».</div>
+    <p class="note">Ловушка: «Без сахара — значит без калорий» — нет. Калории дают мука, сливки, орехи. Точные цифры — в карточке меню.</p>
+  </div>
+
+  <div class="block">
+    <div class="bh"><h3>«Глютеновый патруль» · глютен</h3><span class="t">0:37–0:50</span></div>
+    <p><b>Мини-лекция (3 мин).</b> Глютен — белок пшеницы, ржи, ячменя и продуктов из них: <b>булгур</b>, кускус, манка, обычная мука и хлеб.
+    Гости без глютена бывают трёх видов: <b>целиакия</b> (нельзя даже крошку), <b>чувствительность</b>, <b>осознанный выбор</b>.</p>
+    <table class="kv">
+      <tr><th>Вместо</th><th>Мы используем</th></tr>
+      <tr><td>Пшеничная мука</td><td>Рисовая, гречневая, кукурузно-рисовая, миндальная</td></tr>
+      <tr><td>Пшеничный хлеб</td><td>Гречневый и рисовый хлеб, гречневые хлебцы</td></tr>
+      <tr><td>Обычная овсянка</td><td>Сертифицированная безглютеновая (обычный овёс загрязняется пшеницей)</td></tr>
+    </table>
+    <p style="margin-top:2mm"><b>Игра (6 мин).</b> На столе три зоны: <b>«Без глютена»</b>, <b>«Есть глютен»</b>, <b>«Уточнить у кухни»</b>.
+    Каждая команда получает 5–6 карточек (стр. 7), проверяет состав в боте и раскладывает. 1 балл за верную карточку, +1 — если
+    команда объяснила <b>почему</b> (какая мука / какая крупа).</p>
+    <div class="grid3">
+      <div class="col"><h4 class="g">Без глютена</h4><ul>
+        <li>Сэндвич с лососем — гречневый хлеб</li>
+        <li>Сэндвич с тунцом — рисовый хлеб</li>
+        <li>Вафля с грибами — безглютеновые вафли</li>
+        <li>Брауни — миндальная мука</li>
+        <li>Каша из овса — сертиф. овсянка</li>
+        <li>Тирамису — безглютеновая мука</li>
+        <li>Фреш-ролл — рисовое тесто</li>
+        <li>Печенье с пеканом — кукурузно-рисовая мука</li>
+      </ul></div>
+      <div class="col"><h4 class="r">Есть глютен</h4><ul>
+        <li>Поке-боулы — булгур</li>
+        <li>Боул с курицей и киноа — в составе булгур (киноа не спасает!)</li>
+      </ul></div>
+      <div class="col"><h4 class="b">Уточнить у кухни</h4><ul>
+        <li>Тёплый боул с пряной курицей — табуле</li>
+        <li>Мини-киш — песочное тесто</li>
+        <li>Авокадо-тост — чёрная булочка</li>
+        <li>Крекеры с пармезаном — «универсальная мука»</li>
+      </ul></div>
+    </div>
+    <div class="warn"><b>Главный вывод зоны «Уточнить»:</b> не уверены — не обещайте. Если в составе нет слов «гречневая / рисовая / безглютеновая» —
+    спрашиваем кухню. Тренер даёт точный ответ по каждой позиции (выяснить до тренинга).</div>
+    <p style="margin-top:2mm"><b>Сценка (4 мин).</b> Тренер — гость: <i>«У меня целиакия. Сэндвич с тунцом точно без глютена?»</i> Доброволец отвечает. Группа проверяет 3 пункта:</p>
+    <ol>
+      <li>Назвал факт: «Хлеб из рисовой муки, глютеновой муки в блюде нет».</li>
+      <li>Не пообещал лишнего: не «у нас всё без глютена, не переживайте».</li>
+      <li>Сказал и сделал: «Я уточню у кухни, чтобы вы были спокойны» — и действительно уточнил.</li>
+    </ol>
+  </div>
+
+  <div class="block">
+    <div class="bh"><h3>Перерыв · дегустация</h3><span class="t">0:50–0:55</span></div>
+    <p>Все пробуют кусочек десерта на стевии и на агаве. Вопрос в воздух: <i>«Гость говорит: стевия же горчит?»</i> — ответ:
+    «В больших количествах может. Мы дозируем её так, чтобы вкус был чистым. Попробуйте Тирамису — гости часто не верят, что оно без сахара».
+    Нельзя честно советовать то, что не пробовал.</p>
+  </div>
+
+  <div class="block">
+    <div class="bh"><h3>Слепая дегустация · лактоза и молоко</h3><span class="t">0:55–1:07</span></div>
+    <p><b>Дегустация (5 мин).</b> На столе 5 стаканчиков с номерами. Команды пробуют и на бланке (стр. 8) пишут, где какое молоко,
+    и одну фразу о нём для гостя. 1 балл за угаданное молоко, 1 балл за точную фразу.</p>
+    <table class="kv">
+      <tr><th>Молоко</th><th>Одна фраза для гостя</th></tr>
+      <tr><td>Кокосовое · растительное</td><td>Без лактозы, сливочная текстура, лёгкий кокосовый вкус</td></tr>
+      <tr><td>Овсяное · растительное</td><td>Мягкое, чуть сладковатое, отлично взбивается в пену</td></tr>
+      <tr><td>Соевое · растительное</td><td>Самое белковое из растительных, нейтральный вкус</td></tr>
+      <tr><td>Банановое</td><td>Натуральная сладость банана — сахар не нужен</td></tr>
+      <tr><td>Безлактозное · <b>коровье</b></td><td>Коровье молоко, из которого убрали лактозу</td></tr>
+    </table>
+    <p style="margin-top:2mm"><b>Ловушка (4 мин).</b> Тренер-гость: <i>«Я веган. Мне Матча латте на безлактозном, пожалуйста».</i> Первая команда, хлопнувшая в ладоши
+    с правильным ответом, получает 2 балла.</p>
+    <div class="q">«Безлактозное — это коровье молоко без лактозы, веганам оно не подходит. Приготовлю вам на кокосовом, овсяном или соевом — какое больше нравится?»</div>
+    <p><b>Где лактоза «прячется» (3 мин).</b> Команды за 1 минуту ищут в боте напитки, где молоко растительное, но есть <b>сливки 33% или сливочная пена</b>.
+    Ориентир: Матча крем-латте (сливки), Матча Лаванда (лавандовая пенка на сливках 33%), Матча Рафаэло (сливки 33%). Гостю без лактозы — Матча манго на кокосовом.</p>
+    <p class="note">Аллергия на белок коровьего молока ≠ непереносимость лактозы. Таким гостям — только растительное молоко.</p>
+  </div>
+
+  <div class="block">
+    <div class="bh"><h3>«Белковая лестница» · белок и суперфуды</h3><span class="t">1:07–1:15</span></div>
+    <p><b>Игра (4 мин).</b> Каждая команда получает 6 карточек (стр. 7) и выстраивает их «лестницей» — от самого белкового к наименее.
+    Проверять в боте нельзя. 3 балла за полностью верную лестницу, 1 — если ошибка в одной паре.</p>
+    <table class="kv">
+      <tr><th>Позиция</th><th>Белок (по карточкам меню)</th></tr>
+      <tr><td>Боул с тунцом</td><td>45 г</td></tr>
+      <tr><td>Поке-боул с говядиной</td><td>38 г</td></tr>
+      <tr><td>Протеиновые сырники с ягодами</td><td>22 г</td></tr>
+      <tr><td>Смузи Protein Boost</td><td>19 г</td></tr>
+      <tr><td>Матча протеин · Протеиновый чизкейк</td><td>по 16 г</td></tr>
+    </table>
+    <p class="note">Цифры сверить в боте перед тренингом — меню обновляется.</p>
+    <p style="margin-top:2mm"><b>Суперфуд за 10 секунд (4 мин).</b> Тренер называет суперфуд — команда говорит фразу по формуле:</p>
+    <div class="q">Ингредиент + что он даёт + где он у нас</div>
+    <p>Пример: «Семена чиа — омега-3 и клетчатка, долгая сытость. Попробуйте Чиа-пудинг с манго». Суперфуды: чиа, киноа, спирулина, асаи, имбирь и куркума, шиповник, ходзича.</p>
+  </div>
+
+  <div class="block">
+    <div class="bh"><h3>«Не спорь с гостем» · мифы о питании</h3><span class="t">1:15–1:23</span></div>
+    <p>Пары: один — «гость с мифом» (тянет карточку), второй — сотрудник. 1 минута на ответ, потом смена ролей. Правило: <b>не спорим, а мягко
+    объясняем</b> — гость не должен почувствовать себя неправым. Тренер ходит между парами и даёт баллы командам за лучшие ответы.</p>
+    <div class="list">
+      <div class="it"><span>«Без глютена — значит меньше калорий»<small>Не обязательно. Польза — в лёгкости для тех, кому глютен не подходит, а не в калориях.</small></span><span class="tag r">миф</span></div>
+      <div class="it"><span>«Жиры вредные, от них полнеют»<small>Полезные жиры нужны для мозга, гормонов, усвоения витаминов: авокадо, лосось, орехи.</small></span><span class="tag r">миф</span></div>
+      <div class="it"><span>«Десерт без сахара можно есть сколько угодно»<small>Без сахара — без скачка сахара в крови. Но калории муки, сливок, орехов остаются.</small></span><span class="tag r">миф</span></div>
+      <div class="it"><span>«Растительное молоко всегда полезнее коровьего»<small>Это вопрос переносимости и предпочтений, а не «полезнее».</small></span><span class="tag r">миф</span></div>
+      <div class="it"><span>«Гречка — это злак, в ней есть глютен»<small>Гречка не родственница пшеницы, глютена в ней нет. Отсюда наш гречневый хлеб.</small></span><span class="tag r">миф</span></div>
+      <div class="it"><span>«Почему у вас дороже, чем в обычной кофейне?»<small>Гречневая и миндальная мука, стевия и агава вместо сахара, церемониальная матча — ингредиенты дороже, зато вы точно знаете, что едите.</small></span><span class="tag b">вопрос</span></div>
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="bh"><h3>Итог</h3><span class="t">1:23–1:30</span></div>
+    <p><b>Блиц (3 мин).</b> Тренер задаёт вопрос — первая хлопнувшая команда отвечает, 1 балл:</p>
+    <ol>
+      <li>Чем мы заменяем сахар? — <i>стевией и сиропом агавы (в нескольких позициях — мёдом)</i></li>
+      <li>Почему гостю без глютена не предлагаем поке? — <i>булгур — это пшеница</i></li>
+      <li>Сколько калорий у стевии? — <i>0</i></li>
+      <li>Самое белковое растительное молоко? — <i>соевое</i></li>
+      <li>Зачем сертифицированная овсянка? — <i>обычный овёс загрязняется пшеницей</i></li>
+      <li>Пять главных аллергенов меню? — <i>орехи, лактоза, яйца, мёд, кунжут</i></li>
+    </ol>
+    <p><b>Круг (3 мин).</b> Подсчёт баллов, приз победителям. Каждый называет <b>один ингредиент и одну фразу о нём</b>, которую скажет гостю на следующей смене.</p>
+    <p><b>Домашнее задание:</b> пройти тренинг «Школа wellness-питания» в боте и ответить на квиз · выучить подсластитель и муку каждой позиции на своей витрине
+    (Welcome Book, «Дни 4–7») · попробовать хотя бы 2 позиции меню, которые ещё не пробовал.</p>
+  </div>
+</section>
+
+<!-- =============== СТР. 7: РАЗДАТКА =============== -->
+<section class="page">
+  <h2 class="sec" style="margin-top:0">Раздатка · карточки «Собери боул»</h2>
+  <p class="note" style="margin-bottom:2mm">Распечатать по набору на команду и разрезать. Курсивом — ловушки (быстрые углеводы).</p>
+  <div class="cards">
+    <div class="card"><b>Тунец</b><small>белок</small></div>
+    <div class="card"><b>Куриное бедро</b><small>белок</small></div>
+    <div class="card"><b>Лосось</b><small>белок + полезный жир</small></div>
+    <div class="card"><b>Перепелиные яйца</b><small>белок</small></div>
+    <div class="card"><b>Авокадо</b><small>полезный жир</small></div>
+    <div class="card"><b>Грецкий орех</b><small>полезный жир · орехи!</small></div>
+    <div class="card"><b>Киноа</b><small>медленные углеводы + белок</small></div>
+    <div class="card"><b>Дикий рис и басмати</b><small>углеводы</small></div>
+    <div class="card"><b>Эдамаме</b><small>белок + клетчатка</small></div>
+    <div class="card"><b>Томаты черри</b><small>овощи</small></div>
+    <div class="card"><b>Руккола</b><small>овощи</small></div>
+    <div class="card"><b><i>Белый батон</i></b><small>ловушка: быстрые углеводы, глютен</small></div>
+    <div class="card"><b><i>Сахарный сироп</i></b><small>ловушка: сахар</small></div>
+    <div class="card"><b><i>Картофель фри</i></b><small>ловушка</small></div>
+    <div class="card"><b>Кунжутный соус</b><small>кунжут — аллерген</small></div>
+    <div class="card"><b>Манго</b><small>фрукт</small></div>
+  </div>
+
+  <h2 class="sec">Раздатка · карточки «Три банки»</h2>
+  <div class="cards">
+    <div class="card"><b>Чизкейк Зебра</b></div>
+    <div class="card"><b>Тирамису</b></div>
+    <div class="card"><b>Матча-фисташка</b></div>
+    <div class="card"><b>Шоколадно-сливочный</b></div>
+    <div class="card"><b>Шиповник Diet</b></div>
+    <div class="card"><b>Каша из овса</b></div>
+    <div class="card"><b>Красный бархат</b></div>
+    <div class="card"><b>Протеиновый чизкейк</b></div>
+    <div class="card"><b>Матча клубника</b></div>
+    <div class="card"><b>Лимонад Малина-базилик</b></div>
+    <div class="card"><b>Печенье с финиками</b></div>
+    <div class="card"><b>Йогурт-боул</b></div>
+    <div class="card"><b>Смузи Berry Coconut Cream</b></div>
+    <div class="card"><b>Витаминная вода Honey</b></div>
+    <div class="card"><b>Печенье с пеканом</b></div>
+    <div class="card"><b>Матча банан</b><small>сгущёнка агавы</small></div>
+  </div>
+
+  <h2 class="sec">Раздатка · карточки «Глютеновый патруль»</h2>
+  <div class="cards">
+    <div class="card"><b>Сэндвич с лососем</b></div>
+    <div class="card"><b>Сэндвич с тунцом</b></div>
+    <div class="card"><b>Вафля с грибами</b></div>
+    <div class="card"><b>Брауни</b></div>
+    <div class="card"><b>Каша из овса</b></div>
+    <div class="card"><b>Тирамису</b></div>
+    <div class="card"><b>Фреш-ролл с курицей</b></div>
+    <div class="card"><b>Печенье с пеканом</b></div>
+    <div class="card"><b>Поке-боул с лососем</b></div>
+    <div class="card"><b>Боул с курицей и киноа</b></div>
+    <div class="card"><b>Тёплый боул с пряной курицей</b></div>
+    <div class="card"><b>Мини-киш с лососем</b></div>
+    <div class="card"><b>Авокадо-тост</b></div>
+    <div class="card"><b>Крекеры с пармезаном</b></div>
+    <div class="card"><b>Сэндвич Мари</b><small>гречневый хлеб</small></div>
+    <div class="card"><b>Чиа-пудинг с манго</b></div>
+  </div>
+
+  <h2 class="sec">Раздатка · «Белковая лестница»</h2>
+  <div class="cards c3">
+    <div class="card"><b>Боул с тунцом</b></div>
+    <div class="card"><b>Поке-боул с говядиной</b></div>
+    <div class="card"><b>Протеиновые сырники</b></div>
+    <div class="card"><b>Смузи Protein Boost</b></div>
+    <div class="card"><b>Матча протеин</b></div>
+    <div class="card"><b>Протеиновый чизкейк</b></div>
+  </div>
+
+  <h2 class="sec">Бланк команды · слепая дегустация молока</h2>
+  <table class="sheet">
+    <tr><th style="width:12mm">№</th><th style="width:48mm">Какое это молоко?</th><th>Одна фраза о нём для гостя</th></tr>
+    <tr><td>1</td><td></td><td></td></tr>
+    <tr><td>2</td><td></td><td></td></tr>
+    <tr><td>3</td><td></td><td></td></tr>
+    <tr><td>4</td><td></td><td></td></tr>
+    <tr><td>5</td><td></td><td></td></tr>
+  </table>
+  <div class="foot">Команда: ____________________ · Баллы: ______</div>
+</section>
+
+</body>
+</html>
