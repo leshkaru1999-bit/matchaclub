@@ -2,25 +2,56 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#454C7F">
     <title>Меню — Matcha Club</title>
     <meta name="description" content="Меню Matcha Club & Mari Wellness: фото, состав и КБЖУ каждого блюда.">
-    <link rel="stylesheet" href="styles.css?v=3">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500;1,600&family=Inter:wght@400;500;600;700&family=Unbounded:wght@500;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css?v=4">
 </head>
-<body>
-    <header id="site-header">
+<body class="is-loading">
+    <!-- Заставка: логотип «наливается» как матча в чашку -->
+    <div id="splash" class="splash" aria-hidden="true">
+        <div class="splash-cup">
+            <div class="splash-fill"></div>
+            <img src="../img/logo_white.png" alt="" class="splash-logo">
+        </div>
+    </div>
+
+    <!-- Фоновые «пятна» с параллаксом -->
+    <div class="blobs" aria-hidden="true">
+        <span class="blob blob-1"></span>
+        <span class="blob blob-2"></span>
+        <span class="blob blob-3"></span>
+    </div>
+
+    <header id="site-header" class="site-header">
         <img src="../img/logo_blue.png" alt="Matcha Club" class="site-logo">
     </header>
 
     <main id="main">
         <section class="hero">
-            <div class="hero-kicker">Matcha Club &amp; Mari Wellness</div>
-            <h1>Меню</h1>
-            <p>Листайте фото, смотрите состав и КБЖУ каждого блюда —<br>нажмите на карточку, чтобы рассмотреть подробнее.</p>
+            <div class="hero-kicker reveal-line"><span>Matcha Club &amp; Mari Wellness</span></div>
+            <h1 class="hero-title" aria-label="Меню">
+                <span class="hero-word" data-split>МЕНЮ</span>
+            </h1>
+            <p class="hero-sub reveal-line"><span>Тапните на&nbsp;карточку&nbsp;— покажем состав и&nbsp;КБЖУ</span></p>
+
+            <div class="hero-stickers" aria-hidden="true">
+                <span class="sticker sticker-1">matcha<br>time</span>
+                <span class="sticker sticker-2">🍵</span>
+                <span class="sticker sticker-3">wellness</span>
+            </div>
         </section>
+
+        <div class="marquee" aria-hidden="true">
+            <div class="marquee-track">
+                <span>MATCHA</span><i>✦</i><span>CLUB</span><i>✦</i><span>WELLNESS</span><i>✦</i><span>CEREMONIAL&nbsp;GRADE</span><i>✦</i>
+                <span>MATCHA</span><i>✦</i><span>CLUB</span><i>✦</i><span>WELLNESS</span><i>✦</i><span>CEREMONIAL&nbsp;GRADE</span><i>✦</i>
+            </div>
+        </div>
 
         <section id="fact-card" class="fact-card hidden">
             <div class="fact-icon">💡</div>
@@ -31,11 +62,13 @@
         </section>
 
         <nav id="cat-nav" class="cat-nav">
-            <div id="cat-nav-inner" class="cat-nav-inner"></div>
+            <div id="cat-nav-inner" class="cat-nav-inner">
+                <span id="cat-indicator" class="cat-indicator"></span>
+            </div>
         </nav>
 
         <div id="menu-root">
-            <div class="loader"><div class="spinner"></div><p>Загружаем меню...</p></div>
+            <div class="loader"><div class="loader-dots"><i></i><i></i><i></i></div><p>Взбиваем меню...</p></div>
         </div>
     </main>
 
@@ -44,8 +77,7 @@
     </section>
 
     <footer class="site-footer">
-        <img src="../img/logo_blue.png" alt="Matcha Club" class="footer-logo">
-        <p class="footer-title">Matcha Club &amp; Mari Wellness</p>
+        <img src="../img/logo_white.png" alt="Matcha Club" class="footer-logo">
         <a id="instagram-link" href="#" target="_blank" rel="noopener" class="instagram-link hidden"></a>
 
         <div class="branches-title">Наши филиалы</div>
@@ -55,28 +87,29 @@
     </footer>
 
     <!-- Детальная карточка блюда -->
-    <div id="dish-modal" class="dish-modal">
+    <div id="dish-modal" class="dish-modal" role="dialog" aria-modal="true" aria-labelledby="dish-modal-name">
         <div class="dish-modal-backdrop"></div>
-        <div class="dish-modal-sheet">
+        <div class="dish-modal-sheet" id="dish-modal-sheet">
+            <div class="dish-modal-grabber"></div>
             <button class="dish-modal-close" id="dish-modal-close" aria-label="Закрыть">✕</button>
             <div class="dish-modal-photo" id="dish-modal-photo"></div>
             <div class="dish-modal-body">
-                <div class="dish-modal-name-row">
+                <div class="dish-modal-name-row stagger">
                     <h2 id="dish-modal-name"></h2>
                     <span id="dish-modal-volume" class="dish-modal-volume"></span>
                 </div>
-                <div class="dish-modal-price-row">
+                <div class="dish-modal-price-row stagger">
                     <span id="dish-modal-price" class="dish-modal-price"></span>
                     <span id="dish-modal-price-note" class="dish-modal-price-note"></span>
                 </div>
-                <p id="dish-modal-desc" class="dish-modal-desc"></p>
-                <div id="dish-modal-kbzhu" class="kbzhu-row"></div>
-                <p id="dish-modal-ingredients" class="dish-modal-ingredients"></p>
-                <p id="dish-modal-allergens" class="item-allergens"></p>
+                <p id="dish-modal-desc" class="dish-modal-desc stagger"></p>
+                <div id="dish-modal-kbzhu" class="kbzhu-row stagger"></div>
+                <p id="dish-modal-ingredients" class="dish-modal-ingredients stagger"></p>
+                <p id="dish-modal-allergens" class="item-allergens stagger"></p>
             </div>
         </div>
     </div>
 
-    <script src="app.js?v=3"></script>
+    <script src="app.js?v=4"></script>
 </body>
 </html>
