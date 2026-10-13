@@ -8,7 +8,7 @@
     <meta name="description" content="Меню Matcha Club & Mari Wellness: фото, состав и КБЖУ каждого блюда.">
     <link rel="preload" href="fonts/Inter-var.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="media/latte.jpg" as="image">
-    <link rel="stylesheet" href="styles.css?v=6">
+    <link rel="stylesheet" href="styles.css?v=7">
 </head>
 <body class="is-loading">
     <!-- Заставка: индиго-экран с логотипом, как у приложений-кофеен -->
@@ -68,25 +68,29 @@
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
             </button>
             <div id="dish-kbzhu" class="dish-kbzhu"></div>
-            <button id="dish-more-btn" class="dish-more-btn" type="button" aria-expanded="false">
-                подробнее
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-            </button>
+        </div>
+        <div class="dish-bottom">
             <div id="dish-more" class="dish-more">
                 <div class="dish-more-inner">
-                    <p id="dish-desc" class="dish-desc"></p>
-                    <p id="dish-ingredients" class="dish-ingredients"></p>
-                    <p id="dish-allergens" class="dish-allergens"></p>
-                    <p id="dish-price-note" class="dish-price-note"></p>
+                    <div class="dish-more-card">
+                        <p id="dish-desc" class="dish-desc"></p>
+                        <p id="dish-ingredients" class="dish-ingredients"></p>
+                        <p id="dish-allergens" class="dish-allergens"></p>
+                        <p id="dish-price-note" class="dish-price-note"></p>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="dish-bar">
-            <span id="dish-volume" class="dish-volume"></span>
-            <span id="dish-price" class="dish-price"></span>
+            <div class="dish-bar">
+                <button id="dish-more-btn" class="dish-more-btn" type="button" aria-expanded="false">
+                    подробнее
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>
+                </button>
+                <span id="dish-volume" class="dish-volume"></span>
+                <span id="dish-price" class="dish-price"></span>
+            </div>
         </div>
     </div>
 
-    <script src="app.js?v=6"></script>
+    <script src="app.js?v=7"></script>
 </body>
 </html>
