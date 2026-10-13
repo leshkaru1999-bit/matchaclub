@@ -9,6 +9,13 @@ import database as db
 from config import ADMIN_ID, ADMIN_USERNAME, DATA_DIR
 
 
+def format_price(price):
+    """115000 → «115 000 сум»; пусто, если цена не задана."""
+    if not price:
+        return '—'
+    return f"{int(price):,}".replace(',', ' ') + ' сум'
+
+
 def is_admin(user) -> bool:
     """Super-admin (из .env) + админы добавленные через бот."""
     if ADMIN_ID and user.id == ADMIN_ID:
@@ -570,6 +577,7 @@ async def admin_edit_item_callback(update: Update, context: ContextTypes.DEFAULT
         f"<b>Описание:</b> {item.get('description', '—')}\n"
         f"<b>Состав:</b> {item.get('ingredients', '—')}\n"
         f"<b>Объём:</b> {item.get('volume', '—')}\n"
+        f"<b>Цена:</b> {format_price(item.get('price'))}\n"
         f"<b>КБЖУ:</b> {item.get('calories', 0)}/{item.get('protein', 0)}/{item.get('fat', 0)}/{item.get('carbs', 0)}\n"
         f"<b>Аллергены:</b> {item.get('allergens', '—')}\n"
         f"<b>Время готовки:</b> {item.get('prep_time', '—')}\n"
@@ -600,6 +608,7 @@ async def admin_edit_item_callback(update: Update, context: ContextTypes.DEFAULT
             InlineKeyboardButton("⏱ Время готовки", callback_data=f"adm_edf_prep_{cat_id}_{item_idx}"),
             InlineKeyboardButton("🎙 Аудио-гид", callback_data=f"adm_edf_audio_{cat_id}_{item_idx}")
         ],
+        [InlineKeyboardButton("💰 Цена", callback_data=f"adm_edf_price_{cat_id}_{item_idx}")],
         [
             InlineKeyboardButton(
                 f"🙈 Видно гостям: {'Нет' if item.get('hidden_from_guest') else 'Да'}",
@@ -651,6 +660,7 @@ async def admin_edit_field_callback(update: Update, context: ContextTypes.DEFAUL
                 f"<b>Описание:</b> {item.get('description', '—')}\n"
                 f"<b>Состав:</b> {item.get('ingredients', '—')}\n"
                 f"<b>Объём:</b> {item.get('volume', '—')}\n"
+                f"<b>Цена:</b> {format_price(item.get('price'))}\n"
                 f"<b>КБЖУ:</b> {item.get('calories', 0)}/{item.get('protein', 0)}/{item.get('fat', 0)}/{item.get('carbs', 0)}\n"
                 f"<b>Аллергены:</b> {item.get('allergens', '—')}\n"
                 f"<b>Время готовки:</b> {item.get('prep_time', '—')}\n"
@@ -678,6 +688,7 @@ async def admin_edit_field_callback(update: Update, context: ContextTypes.DEFAUL
                 [
                     InlineKeyboardButton("⏱ Время готовки", callback_data=f"adm_edf_prep_{cat_id}_{item_idx}")
                 ],
+                [InlineKeyboardButton("💰 Цена", callback_data=f"adm_edf_price_{cat_id}_{item_idx}")],
                 [
                     InlineKeyboardButton(
                         f"🙈 Видно гостям: {'Нет' if item.get('hidden_from_guest') else 'Да'}",
@@ -705,6 +716,8 @@ async def admin_edit_field_callback(update: Update, context: ContextTypes.DEFAUL
         prompt = "Отправь список <b>Аллергенов</b> (например: <code>мед, орехи, молоко</code>).\nДля удаления отправь <code>-</code>.\nИли /cancel для отмены."
     elif field == 'prep':
         prompt = "Отправь <b>Время готовки</b> (например: <code>10-18 минут</code>).\nДля удаления отправь <code>-</code>.\nИли /cancel для отмены."
+    elif field == 'price':
+        prompt = "Отправь новую <b>Цену</b> в сумах (только число, например: <code>115000</code>).\nДля удаления отправь <code>-</code>.\nИли /cancel для отмены."
     elif field == 'audio':
         prompt = "Отправь <b>Аудио-гид</b> (голосовое сообщение или mp3/ogg файл) для этого блюда.\nДля удаления отправь <code>-</code>.\nИли /cancel для отмены."
 
@@ -997,6 +1010,15 @@ async def handle_admin_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text("❌ Нужно отправить текст.")
                 return
             item['allergens'] = "" if text == "-" else text
+        elif field == 'price':
+            if text == "-":
+                item.pop('price', None)
+            else:
+                digits = re.sub(r'\D', '', text or '')
+                if not digits:
+                    await update.message.reply_text("❌ Нужно отправить число, например: 115000")
+                    return
+                item['price'] = int(digits)
         elif field == 'prep':
             if not text:
                 await update.message.reply_text("❌ Нужно отправить текст.")

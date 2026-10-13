@@ -47,6 +47,14 @@
         return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' сум';
     }
 
+    // В боте объём часто записан просто числом («300»). Гостю непонятно, что
+    // это, поэтому дописываем единицу: для бара — мл, для кухни — граммы.
+    function formatVolume(item) {
+        const v = (item.volume || '').toString().trim();
+        if (/^\d+(?:[.,]\d+)?$/.test(v)) return `${v}\u00A0${item._type === 'bar' ? 'мл' : 'г'}`;
+        return v;
+    }
+
     const CHEV = '<svg class="chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
 
     function photoHtml(item, eager, extra) {
@@ -115,7 +123,7 @@
         const b = document.createElement('button');
         b.type = 'button';
         b.className = 'card' + (wide ? ' wide' : '');
-        const meta = [item.volume, item.calories ? `${item.calories} ккал` : ''].filter(Boolean).join(' · ');
+        const meta = [formatVolume(item), item.calories ? `${item.calories} ккал` : ''].filter(Boolean).join(' · ');
         const text = `
             <span class="card-name">${escapeHtml(item.name)}</span>
             ${meta ? `<span class="card-meta">${escapeHtml(meta)}</span>` : ''}
@@ -154,7 +162,7 @@
         // Некоторые позиции сняты с публичной витрины (hidden_from_guest), но
         // остаются в боте для сотрудников — гостям их показывать не нужно.
         const cats = categories
-            .map(c => ({ ...c, items: (c.items || []).filter(it => !it.hidden_from_guest) }))
+            .map(c => ({ ...c, items: (c.items || []).filter(it => !it.hidden_from_guest).map(it => ({ ...it, _type: c.type })) }))
             .filter(c => c.items.length > 0);
         const order = ['kitchen', 'bar'];
         const ordered = order.flatMap(t => cats.filter(c => c.type === t))
@@ -477,13 +485,11 @@
         moreBtn.setAttribute('aria-expanded', 'false');
         document.getElementById('dish-more').classList.remove('open');
 
-        document.getElementById('dish-volume').textContent = item.volume || '';
+        document.getElementById('dish-volume').textContent = formatVolume(item);
         document.getElementById('dish-price').textContent = item.price ? formatPrice(item.price) : '';
 
         // Порядок появления: название, КБЖУ, кнопка, нижняя плашка.
         document.getElementById('dish-name').className = 'dish-name fx';
-        moreBtn.classList.add('fx');
-        moreBtn.style.setProperty('--d', 5);
         document.querySelector('.dish-bar').classList.add('fx');
         document.querySelector('.dish-bar').style.setProperty('--d', 6);
 
@@ -542,7 +548,8 @@
         let y0 = null, dy = 0;
         const head = dish.querySelector('.dish-head');
         dish.addEventListener('touchstart', e => {
-            if (head.contains(e.target) && head.scrollTop > 0) { y0 = null; return; }
+            const card = dish.querySelector('.dish-more-card');
+            if ((head.contains(e.target) && head.scrollTop > 0) || (card.contains(e.target) && card.scrollTop > 0)) { y0 = null; return; }
             y0 = e.touches[0].clientY; dy = 0;
         }, { passive: true });
         dish.addEventListener('touchmove', e => {
