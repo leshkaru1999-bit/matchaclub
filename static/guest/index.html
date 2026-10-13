@@ -3,113 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#454C7F">
+    <meta name="theme-color" content="#F6F3EA">
     <title>Меню — Matcha Club</title>
     <meta name="description" content="Меню Matcha Club & Mari Wellness: фото, состав и КБЖУ каждого блюда.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500;1,600&family=Inter:wght@400;500;600;700&family=Unbounded:wght@500;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=5">
+    <link rel="preload" href="fonts/Inter-var.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="media/latte.jpg" as="image">
+    <link rel="stylesheet" href="styles.css?v=6">
 </head>
 <body class="is-loading">
-    <!-- Заставка: логотип «наливается» как матча в чашку -->
+    <!-- Заставка: индиго-экран с логотипом, как у приложений-кофеен -->
     <div id="splash" class="splash" aria-hidden="true">
-        <div class="splash-cup">
-            <div class="splash-fill"></div>
-            <img src="../img/logo_white.png" alt="" class="splash-logo">
-        </div>
+        <img src="../img/logo_white.png" alt="" class="splash-logo">
     </div>
 
-    <!-- Фоновые «пятна» с параллаксом -->
-    <div class="blobs" aria-hidden="true">
-        <span class="blob blob-1"></span>
-        <span class="blob blob-2"></span>
-        <span class="blob blob-3"></span>
-    </div>
-
-    <header id="site-header" class="site-header">
-        <img src="../img/logo_blue.png" alt="Matcha Club" class="site-logo">
-    </header>
-
-    <main id="main">
-        <section class="hero">
-            <div class="hero-kicker reveal-line"><span>Matcha Club &amp; Mari Wellness</span></div>
-            <h1 class="hero-title" aria-label="Меню">
-                <span class="hero-word" data-split>МЕНЮ</span>
-            </h1>
-            <p class="hero-sub reveal-line"><span>Тапните на&nbsp;карточку&nbsp;— покажем состав и&nbsp;КБЖУ</span></p>
-
-            <div class="hero-stickers" aria-hidden="true">
-                <span class="sticker sticker-1">matcha<br>time</span>
-                <span class="sticker sticker-2">🍵</span>
-                <span class="sticker sticker-3">wellness</span>
-            </div>
-        </section>
-
-        <div class="marquee" aria-hidden="true">
-            <div class="marquee-track">
-                <span>MATCHA</span><i>✦</i><span>CLUB</span><i>✦</i><span>WELLNESS</span><i>✦</i><span>CEREMONIAL&nbsp;GRADE</span><i>✦</i>
-                <span>MATCHA</span><i>✦</i><span>CLUB</span><i>✦</i><span>WELLNESS</span><i>✦</i><span>CEREMONIAL&nbsp;GRADE</span><i>✦</i>
-            </div>
+    <!-- Видео-баннер -->
+    <section class="hero" id="hero" aria-label="Сезонное в Matcha Club">
+        <div class="hero-media" id="hero-media"></div>
+        <div class="hero-shade"></div>
+        <div class="hero-top">
+            <img src="../img/logo_white.png" alt="Matcha Club" class="hero-logo">
+            <a href="#site-footer" class="hero-btn" aria-label="Филиалы и контакты">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+            </a>
         </div>
+        <div class="hero-progress" id="hero-progress"></div>
+        <button class="hero-caption" id="hero-caption" type="button">
+            <span class="hero-title" id="hero-title">&nbsp;</span>
+            <span class="hero-sub" id="hero-sub">&nbsp;</span>
+        </button>
+    </section>
 
-        <section id="fact-card" class="fact-card hidden">
-            <div class="fact-icon">💡</div>
-            <div>
-                <div class="fact-label">Знаете ли вы?</div>
-                <div id="fact-text" class="fact-text">Загрузка...</div>
-            </div>
-        </section>
+    <!-- Двухуровневые вкладки -->
+    <nav class="tabs" id="tabs" aria-label="Разделы меню">
+        <div class="tabs-main" id="tabs-main"></div>
+        <div class="tabs-sub" id="tabs-sub"></div>
+    </nav>
 
-        <nav id="cat-nav" class="cat-nav">
-            <div id="cat-nav-inner" class="cat-nav-inner">
-                <span id="cat-indicator" class="cat-indicator"></span>
-            </div>
-        </nav>
-
-        <div id="menu-root">
-            <div class="loader"><div class="loader-dots"><i></i><i></i><i></i></div><p>Взбиваем меню...</p></div>
+    <main id="menu-root" class="menu-root">
+        <div class="skeleton" aria-hidden="true">
+            <div class="sk sk-title"></div>
+            <div class="sk-row"><div class="sk sk-mini"></div><div class="sk sk-mini"></div><div class="sk sk-mini"></div><div class="sk sk-mini"></div></div>
+            <div class="sk sk-title"></div>
+            <div class="sk-grid"><div class="sk sk-card"></div><div class="sk sk-card"></div><div class="sk sk-card"></div><div class="sk sk-card"></div></div>
         </div>
     </main>
 
-    <section id="philosophy-card" class="philosophy-card hidden">
-        <p id="philosophy-text"></p>
-    </section>
-
-    <footer class="site-footer">
-        <img src="../img/logo_white.png" alt="Matcha Club" class="footer-logo">
-        <a id="instagram-link" href="#" target="_blank" rel="noopener" class="instagram-link hidden"></a>
-
-        <div class="branches-title">Наши филиалы</div>
+    <footer class="site-footer" id="site-footer">
+        <p id="philosophy-text" class="philosophy hidden"></p>
+        <div class="footer-title">наши филиалы</div>
         <div id="branches-list" class="branches-list"></div>
-
-        <p id="allergy-note" class="allergy-note"></p>
+        <a id="instagram-link" href="#" target="_blank" rel="noopener" class="instagram-link hidden"></a>
+        <p id="allergy-note" class="allergy-note hidden"></p>
+        <img src="../img/logo_blue.png" alt="Matcha Club" class="footer-logo">
     </footer>
 
-    <!-- Детальная карточка блюда -->
-    <div id="dish-modal" class="dish-modal" role="dialog" aria-modal="true" aria-labelledby="dish-modal-name">
-        <div class="dish-modal-backdrop"></div>
-        <div class="dish-modal-sheet" id="dish-modal-sheet">
-            <div class="dish-modal-grabber"></div>
-            <button class="dish-modal-close" id="dish-modal-close" aria-label="Закрыть">✕</button>
-            <div class="dish-modal-photo" id="dish-modal-photo"></div>
-            <div class="dish-modal-body">
-                <div class="dish-modal-name-row stagger">
-                    <h2 id="dish-modal-name"></h2>
-                    <span id="dish-modal-volume" class="dish-modal-volume"></span>
+    <!-- Карточка блюда на весь экран -->
+    <div id="dish" class="dish" role="dialog" aria-modal="true" aria-labelledby="dish-name" hidden>
+        <div class="dish-bg" id="dish-bg"></div>
+        <div class="dish-shade"></div>
+        <div class="dish-head">
+            <div class="dish-grabber"></div>
+            <h2 id="dish-name" class="dish-name"></h2>
+            <button class="dish-close" id="dish-close" type="button" aria-label="Закрыть">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+            <div id="dish-kbzhu" class="dish-kbzhu"></div>
+            <button id="dish-more-btn" class="dish-more-btn" type="button" aria-expanded="false">
+                подробнее
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <div id="dish-more" class="dish-more">
+                <div class="dish-more-inner">
+                    <p id="dish-desc" class="dish-desc"></p>
+                    <p id="dish-ingredients" class="dish-ingredients"></p>
+                    <p id="dish-allergens" class="dish-allergens"></p>
+                    <p id="dish-price-note" class="dish-price-note"></p>
                 </div>
-                <div class="dish-modal-price-row stagger">
-                    <span id="dish-modal-price" class="dish-modal-price"></span>
-                    <span id="dish-modal-price-note" class="dish-modal-price-note"></span>
-                </div>
-                <p id="dish-modal-desc" class="dish-modal-desc stagger"></p>
-                <div id="dish-modal-kbzhu" class="kbzhu-row stagger"></div>
-                <p id="dish-modal-ingredients" class="dish-modal-ingredients stagger"></p>
-                <p id="dish-modal-allergens" class="item-allergens stagger"></p>
             </div>
+        </div>
+        <div class="dish-bar">
+            <span id="dish-volume" class="dish-volume"></span>
+            <span id="dish-price" class="dish-price"></span>
         </div>
     </div>
 
-    <script src="app.js?v=5"></script>
+    <script src="app.js?v=6"></script>
 </body>
 </html>
