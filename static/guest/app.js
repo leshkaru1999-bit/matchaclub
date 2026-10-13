@@ -14,6 +14,14 @@
     ];
     const SLIDE_MS = 6500;
 
+    // Цены, которых нет в меню на сервере (блюдо не попало в печатное меню,
+    // откуда цены переносились). Срабатывает, только если цена в боте не задана —
+    // как только её поставят через «💰 Цена», возьмётся она.
+    const PRICE_FALLBACK = {
+        'авокадо-тост с яйцом пашот и халуми': 115000,
+    };
+    const normName = (n) => (n || '').toLowerCase().replace(/ё/g, 'е').replace(/[.\s]+$/, '').trim();
+
     const GROUP_LABELS = { foryou: 'для тебя', kitchen: 'еда', bar: 'напитки' };
 
     function escapeHtml(s) {
@@ -162,7 +170,11 @@
         // Некоторые позиции сняты с публичной витрины (hidden_from_guest), но
         // остаются в боте для сотрудников — гостям их показывать не нужно.
         const cats = categories
-            .map(c => ({ ...c, items: (c.items || []).filter(it => !it.hidden_from_guest).map(it => ({ ...it, _type: c.type })) }))
+            .map(c => ({ ...c, items: (c.items || []).filter(it => !it.hidden_from_guest).map(it => ({
+                ...it,
+                _type: c.type,
+                price: it.price || PRICE_FALLBACK[normName(it.name)] || it.price,
+            })) }))
             .filter(c => c.items.length > 0);
         const order = ['kitchen', 'bar'];
         const ordered = order.flatMap(t => cats.filter(c => c.type === t))
