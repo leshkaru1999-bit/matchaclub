@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+
+<ellipse cx="120" cy="214" rx="54" ry="9" fill="#292D4C" opacity=".12"/>
+<path d="M146 24 L132 100" stroke="#454C7F" stroke-width="10" stroke-linecap="round"/>
+<path d="M66 70h108l-12 136a10 10 0 0 1-10 9H88a10 10 0 0 1-10-9z" fill="#FFFFFF" opacity=".6"/>
+<path d="M70 92h100l-9 114a8 8 0 0 1-8 7H87a8 8 0 0 1-8-7z" fill="#F6F3EA"/>
+<path d="M70 92c20 14 40-10 60 4s28-4 40-4l-2 30H72z" fill="#8DB255"/>
+<path d="M72 122h96l-1 12c-26 10-66 10-94 0z" fill="#C7DDA0"/>
+<rect x="84" y="84" width="26" height="24" rx="6" fill="#FFFFFF" opacity=".85" stroke="#292D4C" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="124" y="94" width="24" height="22" rx="6" fill="#FFFFFF" opacity=".85" stroke="#292D4C" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="120" y="176" text-anchor="middle" font-family="Georgia,serif" font-size="17" fill="#454C7F" letter-spacing="1">MATCHA</text>
+<text x="120" y="195" text-anchor="middle" font-family="Georgia,serif" font-size="17" fill="#454C7F" letter-spacing="1">CLUB</text>
+<path d="M66 70h108l-12 136a10 10 0 0 1-10 9H88a10 10 0 0 1-10-9z" fill="none" stroke="#292D4C" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M80 140l4 50" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" opacity=".8"/>
+<rect x="60" y="62" width="120" height="12" rx="6" fill="#454C7F" stroke="#292D4C" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+</svg>
