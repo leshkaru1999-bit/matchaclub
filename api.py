@@ -210,9 +210,29 @@ async def get_random_fact():
     return {"text": "Факты не найдены"}
 
 
+# Вопросы про КБЖУ (калории, белки, жиры, углеводы) в квиз не выдаём
+import re as _re
+_KBJU_QUESTION_RE = _re.compile(
+    r'кбжу|калори|ккал|углевод|\bжир(ов|а|ы|ам)?\b|сколько[^?]*\bбелка\b|самое белков', _re.I)
+_KBJU_ANSWER_RE = _re.compile(r'\d+\s*(г|гр|грамм|ккал)\b', _re.I)
+
+
+def is_kbju_question(q):
+    """Вопрос про КБЖУ: о них спрашивает сам вопрос или правильный ответ содержит граммы/ккал."""
+    if _KBJU_QUESTION_RE.search(q.get('question', '')):
+        return True
+    opts = q.get('options', [])
+    correct = q.get('correct')
+    if isinstance(correct, int) and 0 <= correct < len(opts):
+        return bool(_KBJU_ANSWER_RE.search(str(opts[correct])))
+    return False
+
+
 @app.get("/api/quiz")
 async def get_quiz():
-    return load_json('quiz.json')
+    data = load_json('quiz.json')
+    data['questions'] = [q for q in data.get('questions', []) if not is_kbju_question(q)]
+    return data
 
 
 @app.get("/api/tour")
