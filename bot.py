@@ -32,6 +32,17 @@ def main():
     except Exception as e:
         logger.error(f"⚠️ Не удалось обновить Академию: {e}")
 
+    # Меню: разовые исправления состава/описаний (menu_fixes.py)
+    try:
+        from config import DATA_DIR
+        from menu_fixes import apply_pending
+        applied = apply_pending(DATA_DIR)
+        if applied:
+            menu.reload_menu()
+            logger.info(f"🍽 Исправления меню применены: {', '.join(applied)}")
+    except Exception as e:
+        logger.error(f"⚠️ Не удалось применить исправления меню: {e}")
+
     # События: один раз добавляем серию «Повторение воскресного тренинга» по четвергам
     try:
         from config import DATA_DIR
