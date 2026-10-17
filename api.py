@@ -228,10 +228,34 @@ def is_kbju_question(q):
     return False
 
 
+# Вопросы о времени приготовления/подачи блюд и напитков в квиз не выдаём
+_PREP_TIME_RE = _re.compile(r'сколько времени|врем\w*\s+(приготовлен|готов|подач)', _re.I)
+_MINUTES_ANSWER_RE = _re.compile(r'^\s*\d+\s*[-–]\s*\d+\s*мин', _re.I)
+
+
+def is_prep_time_question(q):
+    if _PREP_TIME_RE.search(q.get('question', '')):
+        return True
+    opts = q.get('options', [])
+    correct = q.get('correct')
+    return isinstance(correct, int) and 0 <= correct < len(opts) and bool(_MINUTES_ANSWER_RE.search(str(opts[correct])))
+
+
+# Вопросы по велком-буку в квиз не выдаём
+WELCOME_BOOK_CATEGORIES = {
+    'о компании', 'о компании & миссия', 'философия', 'днк компании', 'ценности', 'кодекс сотрудника',
+}
+
+
+def is_excluded_question(q):
+    return (is_kbju_question(q) or is_prep_time_question(q)
+            or (q.get('category') or '').strip().lower() in WELCOME_BOOK_CATEGORIES)
+
+
 @app.get("/api/quiz")
 async def get_quiz():
     data = load_json('quiz.json')
-    data['questions'] = [q for q in data.get('questions', []) if not is_kbju_question(q)]
+    data['questions'] = [q for q in data.get('questions', []) if not is_excluded_question(q)]
     return data
 
 
