@@ -320,9 +320,9 @@
                     <p class="bank-progress-text" id="bank-text">Загрузка...</p>
                 </div>
                 <div class="quiz-rules text-left">
-                    <div class="rule-item"><span class="rule-icon success">✅</span> +1 балл за верный ответ</div>
-                    <div class="rule-item"><span class="rule-icon danger">❌</span> -2 балла за ошибку</div>
-                    <div class="rule-item"><span class="rule-icon primary">🍹</span> 20 баллов = 1 напиток</div>
+                    <div class="rule-item"><span class="rule-icon success">✅</span> <span id="rule-correct">+1 балл за верный ответ</span></div>
+                    <div class="rule-item"><span class="rule-icon danger">❌</span> <span id="rule-wrong">−2 балла за ошибку</span></div>
+                    <div class="rule-item"><span class="rule-icon primary">🍹</span> <span id="rule-drink">20 баллов = 1 напиток</span></div>
                     <div class="rule-item"><span class="rule-icon primary">🔄</span> Вопросы не повторяются</div>
                 </div>
                 <button id="btn-start-quiz" class="btn-primary">Начать квиз</button>
@@ -449,6 +449,6 @@
         </div>
     </template>
 
-    <script src="app.v2.js?v=20261006a"></script>
+    <script src="app.v2.js?v=20261017a"></script>
 </body>
 </html>

@@ -898,6 +898,37 @@ const app = {
     QUIZ_STORAGE_KEY: 'matchaclub_seen_questions',
     QUIZ_SESSION_SIZE: 10,
 
+    // Правила подсчёта приходят с сервера (настройки админки) — те же, что при начислении
+    quizScoring() {
+        const s = (this.quizData && this.quizData.scoring) || {};
+        return {
+            correct: typeof s.correct === 'number' ? s.correct : 1,
+            wrong: typeof s.wrong === 'number' ? s.wrong : -2,
+            drink: typeof s.drink === 'number' ? s.drink : (this.rewardCost || 100),
+        };
+    },
+
+    quizPoints(correct, wrong) {
+        const s = this.quizScoring();
+        return Math.max(0, correct * s.correct + wrong * s.wrong);
+    },
+
+    pluralPoints(n) {
+        const a = Math.abs(n) % 100, b = a % 10;
+        if (a > 10 && a < 20) return 'баллов';
+        if (b === 1) return 'балл';
+        if (b >= 2 && b <= 4) return 'балла';
+        return 'баллов';
+    },
+
+    renderQuizRules() {
+        const s = this.quizScoring();
+        const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+        set('rule-correct', `+${s.correct} ${this.pluralPoints(s.correct)} за верный ответ`);
+        set('rule-wrong', s.wrong < 0 ? `−${-s.wrong} ${this.pluralPoints(s.wrong)} за ошибку (итог раунда не меньше 0)` : 'Без штрафа за ошибку');
+        set('rule-drink', `${s.drink} ${this.pluralPoints(s.drink)} = 1 напиток`);
+    },
+
     getSeenQuestions() {
         try {
             const stored = localStorage.getItem(this.QUIZ_STORAGE_KEY);
@@ -970,6 +1001,7 @@ const app = {
             const total = this.quizData.questions.length;
             const seen = seenIds.filter(id => this.quizData.questions.find(q => q.id === id)).length;
             this.updateBankUI(seen, total);
+            this.renderQuizRules();
         }
 
         document.getElementById('btn-start-quiz').onclick = () => {
@@ -1011,7 +1043,7 @@ const app = {
         const q = this.quizState.questions[this.quizState.currentIdx];
         const total = this.quizState.questions.length;
         document.getElementById('quiz-progress').textContent = `${this.quizState.currentIdx + 1}/${total}`;
-        document.getElementById('quiz-score').textContent = `Баллы: ${Math.max(0, this.quizState.correct - (this.quizState.wrong * 2))}`;
+        document.getElementById('quiz-score').textContent = `✅ ${this.quizState.correct} · ❌ ${this.quizState.wrong} · Баллы: ${this.quizPoints(this.quizState.correct, this.quizState.wrong)}`;
 
         const qText = document.getElementById('quiz-question');
         qText.style.opacity = '0';
@@ -1065,7 +1097,7 @@ const app = {
         document.getElementById('quiz-process').classList.add('hidden');
         document.getElementById('quiz-result').classList.remove('hidden');
 
-        const earned = Math.max(0, this.quizState.correct - (this.quizState.wrong * 2));
+        const earned = this.quizPoints(this.quizState.correct, this.quizState.wrong);
 
         document.getElementById('quiz-res-correct').textContent = this.quizState.correct;
         document.getElementById('quiz-res-wrong').textContent = this.quizState.wrong;

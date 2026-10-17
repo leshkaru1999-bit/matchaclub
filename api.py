@@ -254,8 +254,16 @@ def is_excluded_question(q):
 
 @app.get("/api/quiz")
 async def get_quiz():
+    from config import get_settings
     data = load_json('quiz.json')
     data['questions'] = [q for q in data.get('questions', []) if not is_excluded_question(q)]
+    s = get_settings()
+    # Правила подсчёта — те же, по которым /api/quiz/submit начисляет баллы
+    data['scoring'] = {
+        'correct': s.get('points_correct', 1),
+        'wrong': s.get('points_wrong', -2),
+        'drink': s.get('points_for_drink', 100),
+    }
     return data
 
 
