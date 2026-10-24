@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>План тренинга — Психотипы гостей</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Manrope:wght@400;500;600;700&display=block" rel="stylesheet">
+<style>
+:root{--brand:#454C7F;--ink:#292D4C;--cream:#FFF9E9;--paper:#FFFDF6;--matcha:#6F8F4E;--matcha-soft:#E9EEDB;
+--brand-soft:#E6E7F1;--line:#E6DEC6;--muted:#6C6F8C;--red:#A5483F;--red-soft:#F6E4DF}
+@page{size:A4;margin:14mm 14mm 16mm;background:#FFF9E9;
+ @bottom-left{content:"Академия Matcha Club · План тренинга";font:6.5pt 'Manrope',sans-serif;color:#6C6F8C;letter-spacing:.14em;text-transform:uppercase}
+ @bottom-right{content:counter(page);font:7pt 'Manrope',sans-serif;color:#6C6F8C}}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--cream)}
+body{font-family:'Manrope',Arial,sans-serif;color:var(--ink);font-size:8.6pt;line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+h1,h2,h3{font-family:'Cormorant Garamond',Georgia,serif;font-weight:700;color:var(--brand)}
+b{font-weight:700}
+.page{break-after:page}
+.page:last-child{break-after:auto}
+/* шапка */
+.hero{background:var(--brand);color:var(--cream);border-radius:5mm;padding:8mm 8mm 7mm}
+.hero .k{font-size:6.5pt;letter-spacing:.24em;text-transform:uppercase;opacity:.8;margin-bottom:2mm}
+.hero h1{color:var(--cream);font-size:27pt;line-height:1.05;margin-bottom:5mm}
+.facts{display:grid;grid-template-columns:repeat(4,1fr);gap:2.5mm}
+.fact{background:rgba(255,249,233,.12);border-radius:2.5mm;padding:2.5mm 3mm}
+.fact b{display:block;font-size:10pt;line-height:1.25}
+.fact span{font-size:7pt;opacity:.8}
+h2.sec{font-size:16pt;margin:4.5mm 0 1.5mm}
+/* тайминг */
+table{width:100%;border-collapse:collapse}
+.timing th{font-size:6pt;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:left;font-weight:600;padding:1.5mm 1.5mm;border-bottom:1px solid var(--line)}
+.timing td{padding:1.6mm 1.5mm;border-bottom:1px solid var(--line);vertical-align:top;font-size:7.8pt}
+.timing td:first-child{color:var(--matcha);font-weight:700;white-space:nowrap}
+.timing td:nth-child(2){font-weight:700;width:30mm}
+.timing td:last-child{color:var(--muted);width:24mm}
+.timing tr.hl td{background:var(--matcha-soft)}
+.timing tr.brk td{background:var(--brand-soft);font-weight:600}
+.prep{margin-top:4mm;background:var(--red-soft);border-radius:3mm;padding:3mm 4mm;font-size:7.8pt}
+/* блоки сценария */
+h1.big{font-size:21pt;margin-bottom:3mm}
+.block{background:var(--paper);border:1px solid var(--line);border-radius:3.5mm;padding:4mm 4.5mm;margin-bottom:3.5mm;break-inside:avoid}
+.block.split{break-inside:auto}
+.bh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1.5mm}
+.bh h3{font-size:13pt}
+.bh .t{color:var(--matcha);font-weight:700;font-size:7.5pt;white-space:nowrap}
+.block p{margin-bottom:1.6mm}
+.q{border-left:3px solid var(--matcha);background:var(--matcha-soft);padding:2mm 3.5mm;border-radius:0 2.5mm 2.5mm 0;margin:2mm 0;font-style:italic}
+.list{margin:1.5mm 0}
+.list.two{display:grid;grid-template-columns:1fr 1fr;column-gap:6mm}
+.list.two .it{border-bottom:1px solid var(--line)!important}
+.list.two .it .tag{white-space:normal;text-align:right;font-weight:600}
+.list .it{display:grid;grid-template-columns:1fr auto;gap:3mm;padding:1.6mm 0;border-bottom:1px solid var(--line);break-inside:avoid}
+.list .it:last-child{border-bottom:0}
+.list .it small{display:block;color:var(--muted);font-size:7pt;margin-top:.5mm}
+.tag{font-weight:700;font-size:7.5pt;white-space:nowrap}
+.tag.g{color:var(--matcha)}.tag.r{color:var(--red)}.tag.b{color:var(--brand)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:3mm}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3mm}
+.col h4{font-size:7pt;letter-spacing:.12em;text-transform:uppercase;margin-bottom:1mm}
+.col h4.g{color:var(--matcha)}.col h4.r{color:var(--red)}.col h4.b{color:var(--brand)}
+.col ol,.col ul,.block ul,.block ol{margin-left:4.5mm}
+.col li,.block li{margin-bottom:.8mm}
+.kv th{font-size:6pt;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-align:left;font-weight:600;padding:1.2mm 1.5mm;border-bottom:1px solid var(--line)}
+.kv td{padding:1.6mm 1.5mm;border-bottom:1px solid var(--line);vertical-align:top}
+.kv td:first-child{font-weight:600;width:44%}
+.note{font-size:7.3pt;color:var(--muted);margin-top:1.5mm}
+.warn{background:var(--red-soft);border-radius:2.5mm;padding:2.2mm 3mm;margin-top:2mm;font-size:7.8pt}
+/* раздатка */
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:2mm;margin-bottom:2mm}
+.cards.c3{grid-template-columns:repeat(3,1fr)}
+.card{border:1px dashed #BDB394;border-radius:2.5mm;padding:2.5mm 3mm;min-height:10mm;background:var(--paper);font-size:7.8pt;break-inside:avoid}
+.card b{display:block;font-size:8.6pt;margin-bottom:.5mm}
+.card small{color:var(--muted);font-size:6.8pt}
+.sheet th{font-size:6pt;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-align:left;font-weight:600;padding:1.5mm;border-bottom:1px solid var(--ink)}
+.sheet td{padding:2.6mm 1.5mm;border-bottom:1px solid var(--line)}
+.foot{font-size:6.5pt;letter-spacing:.2em;text-transform:uppercase;color:var(--matcha);font-weight:700;margin-top:2mm}
+
+.sheet.tall td{padding:4.2mm 1.5mm}
+.cup{display:grid;grid-template-columns:repeat(4,1fr);gap:2.5mm;margin:2mm 0}
+.cup div{border:1px solid var(--line);border-radius:2.5mm;padding:2.2mm 2.5mm;background:var(--cream);font-size:7.6pt}
+.cup b{display:block;color:var(--brand);font-size:8.4pt}
+
+.types{display:grid;grid-template-columns:1fr 1fr;gap:2.5mm;margin:2mm 0}
+.type{border:1px solid var(--line);border-radius:2.5mm;padding:2.5mm 3mm;background:var(--cream);font-size:7.7pt;break-inside:avoid}
+.type h4{font-family:'Cormorant Garamond',Georgia,serif;font-size:12.5pt;color:var(--brand);margin-bottom:1mm}
+.type p{margin-bottom:.8mm}
+.type .say{color:#34462a;font-style:italic}
+.type .no{color:var(--red)}
+.kv.cheat td:first-child{width:24mm;color:var(--brand)}
+</style>
+</head>
+<body>
+
+<!-- =============== СТР. 1: ОБЗОР =============== -->
+<section class="page">
+  <div class="hero">
+    <div class="k">План тренинга · Тренинг 4</div>
+    <h1>Психотипы гостей</h1>
+    <div class="facts">
+      <div class="fact"><b>90 минут</b><span>с перерывом 5 мин</span></div>
+      <div class="fact"><b>Кассиры, бармены, официанты</b><span>вся смена вместе</span></div>
+      <div class="fact"><b>3 команды</b><span>по 2–4 человека</span></div>
+      <div class="fact"><b>Формат</b><span>пантомима, игры, ролевки «гость-загадка»</span></div>
+    </div>
+  </div>
+
+  <h2 class="sec">Цель тренинга</h2>
+  <p>По тренингу «Психотипы гостей» в боте Matcha Club и карте гостя из Welcome Book (глава 02). После тренинга каждый сотрудник:
+  за 10 секунд считывает гостя по 5 сигналам; узнаёт 4 психотипа и знает, как с каждым говорить; по словам гостя определяет его
+  wellness-мотив и подбирает позиции из меню; понимает, когда подойти, а когда не мешать; знает своих постоянных гостей и их заказ.</p>
+  <div class="q" style="font-style:normal"><b>Главная формула тренинга:</b> психотип подсказывает, КАК говорить. Мотив подсказывает, ЧТО предложить.</div>
+
+  <h2 class="sec">Тайминг</h2>
+  <table class="timing">
+    <tr><th>Время</th><th>Блок</th><th>Что происходит</th><th>Формат</th></tr>
+    <tr class="hl"><td>0:00–0:10</td><td>Разминка «Покажи гостя»</td><td>Пантомима: доброволец без слов изображает гостя по карточке, команды угадывают тип</td><td>Игра, команды</td></tr>
+    <tr><td>0:10–0:15</td><td>Одно предложение не подходит всем (модуль 1)</td><td>5 сигналов, которые считываем в первые секунды</td><td>Обсуждение</td></tr>
+    <tr><td>0:15–0:30</td><td>Четыре психотипа (2)</td><td>Мини-лекция + игра «Одна позиция — четыре подачи»</td><td>Команды, баллы</td></tr>
+    <tr><td>0:30–0:42</td><td>Wellness-мотивации (3)</td><td>Игра «Мотив → меню»: по фразе гостя назвать мотив и 2 позиции</td><td>Команды, на скорость</td></tr>
+    <tr><td>0:42–0:50</td><td>Ситуация визита (4)</td><td>«Подойти или не мешать?»: команды решают, как вести себя в 6 ситуациях</td><td>Команды, баллы</td></tr>
+    <tr class="brk"><td>0:50–0:55</td><td colspan="3">Перерыв</td></tr>
+    <tr class="hl"><td>0:55–1:05</td><td>Постоянный гость (5)</td><td>«Картотека смены»: каждый вспоминает своих постоянных гостей и их заказ</td><td>Все вместе</td></tr>
+    <tr><td>1:05–1:22</td><td>Практика: определите тип (6)</td><td>Ролевки в тройках «Гость-загадка»: тип, мотив и ситуация гостя — секрет</td><td>Тройки, ротация</td></tr>
+    <tr><td>1:22–1:30</td><td>Итог</td><td>Блиц, подсчёт баллов, каждый называет свой тип и мотив, домашнее задание</td><td>Круг</td></tr>
+  </table>
+
+  <div class="prep"><b>Подготовить заранее:</b> распечатанные и разрезанные карточки для пантомимы и для ролевок «Гость-загадка» (стр. 7) ·
+  шпаргалку «4 психотипа» — по одной на человека (стр. 8) · чек-листы наблюдателя (стр. 8) · карточки позиций меню для игры «Одна позиция —
+  четыре подачи» (можно взять из раздатки тренинга 2) · листы и ручки · телефоны с ботом Matcha Club · таблицу баллов · приз команде-победителю.</div>
+</section>
+
+<!-- =============== СТР. 2 =============== -->
+<section class="page">
+  <h1 class="big">Подробный сценарий</h1>
+
+  <div class="block">
+    <div class="bh"><h3>Разминка «Покажи гостя»</h3><span class="t">0:00–0:10</span></div>
+    <p>Делим группу на 3 команды (рассчитаться «решительный — эмоциональный — аналитик»). От каждой команды по очереди выходит доброволец,
+    тянет карточку пантомимы (стр. 7) и <b>без слов</b> 30 секунд изображает гостя: как входит, куда смотрит, как стоит у витрины.
+    Остальные команды пишут на листе тип гостя. 1 балл за угаданный тип, 1 балл показавшему — если угадали обе команды.</p>
+    <p>Тренер пока <b>не объясняет</b> типы: участники угадывают интуитивно. После 6 показов — вопрос группе:
+    <i>«По каким признакам вы угадывали?»</i> Записать ответы на доску — это готовый переход к модулю 1.</p>
+  </div>
+
+  <div class="block">
+    <div class="bh"><h3>Одно предложение не подходит всем</h3><span class="t">0:10–0:15</span></div>
+    <p>Один гость хочет быстро и без разговоров. Другому важно поболтать и узнать про новинки. Третий читает состав до последней строчки.
+    Если говорить со всеми одинаково, половина гостей почувствует, что их не поняли.</p>
+    <p>Тренер сравнивает ответы с доски с 5 сигналами:</p>
+    <table class="kv">
+      <tr><th>Сигнал</th><th>Что считываем</th></tr>
+      <tr><td>Темп</td><td>Спешит или никуда не торопится?</td></tr>
+      <tr><td>Речь</td><td>Коротко и по делу или эмоционально?</td></tr>
+      <tr><td>Вопросы</td><td>Про вкус, состав, цену — или вообще без вопросов?</td></tr>
+      <tr><td>Взгляд</td><td>На витрину, в меню, в телефон, на вас?</td></tr>
+      <tr><td>Компания</td><td>Один, с друзьями, с ребёнком, деловая встреча?</td></tr>
+    </table>
+    <div class="q">Сначала поймите гостя — потом предлагайте.</div>
+  </div>
+
+  <div class="block">
+    <div class="bh"><h3>Четыре психотипа</h3><span class="t">0:15–0:30</span></div>
+    <p><b>Мини-лекция (7 мин).</b> В жизни люди смешанные, но обычно один тип ярче. Раздать шпаргалку (стр. 8). Тренер разбирает типы и
+    для каждого произносит пример вслух в нужной манере.</p>
+    <div class="types">
+      <div class="type"><h4>Решительный</h4>
+        <p><b>Узнать:</b> быстро говорит, знает, чего хочет, смотрит на часы, «мне латте с собой».</p>
+        <p><b>Ценит:</b> скорость, конкретику, результат. <b>Говорить:</b> коротко, одна рекомендация.</p>
+        <p class="say">«К латте — Протеиновый чизкейк, 16 г белка, без сахара. Добавить?»</p>
+        <p class="no">Не делать: долгих рассказов и лишних вопросов.</p></div>
+      <div class="type"><h4>Эмоциональный</h4>
+        <p><b>Узнать:</b> улыбается, общается, фотографирует, «что у вас самое необычное?».</p>
+        <p><b>Ценит:</b> впечатления, красоту, новинки. <b>Говорить:</b> с эмоцией, про вкус и вид.</p>
+        <p class="say">«Попробуйте Матча Рафаэло — кокосовая, нежная и очень красивая в подаче!»</p>
+        <p class="no">Не делать: сухих цифр и безразличного тона.</p></div>
+      <div class="type"><h4>Осторожный</h4>
+        <p><b>Узнать:</b> говорит тихо, долго выбирает, сомневается, берёт «как обычно».</p>
+        <p><b>Ценит:</b> спокойствие, надёжность. <b>Говорить:</b> мягко, не торопя, максимум 2 варианта.</p>
+        <p class="say">«Многие наши гости начинают с Матча латте — это классика. Или помягче — Матча клубника».</p>
+        <p class="no">Не делать: давления и «ну что, решили?».</p></div>
+      <div class="type"><h4>Аналитик</h4>
+        <p><b>Узнать:</b> читает состав, спрашивает КБЖУ, уточняет подсластитель и муку.</p>
+        <p><b>Ценит:</b> факты, точность, честность. <b>Говорить:</b> цифрами и составом.</p>
+        <p class="say">«Боул с тунцом: 45 грамм белка, киноа и овощи. Все КБЖУ есть в карточке».</p>
+        <p class="no">Не делать: «очень вкусно», «всё полезное» без фактов. Не угадывать — уточнять.</p></div>
+    </div>
+    <p><b>Игра «Одна позиция — четыре подачи» (8 мин).</b> Каждая команда тянет карточку позиции меню (например, Брауни, Матча манго,
+    Сэндвич с лососем). За 3 минуты команда готовит 4 фразы — по одной для каждого типа. Затем 4 человека из команды произносят их вслух.
+    Остальные команды оценивают каждую фразу: попала в тип — 1 балл (макс. 4).</p>
+    <p class="note">Ориентир для Брауни. Решительному: «К американо Брауни? Без сахара и глютена». Эмоциональному: «Брауни — плотный,
+    шоколадный, тает во рту!» Осторожному: «Его часто берут к матче — классика». Аналитику: «На миндальной муке и тёмном шоколаде без сахара,
+    без глютена. Аллерген — орехи».</p>
+  </div>
+
+  <div class="block">
+    <div class="bh"><h3>Wellness-мотивации · игра «Мотив → меню»</h3><span class="t">0:30–0:42</span></div>
+    <p><b>Мини-лекция (4 мин).</b> Кроме характера, у гостя есть <b>мотив</b> — ради чего он выбрал wellness-кафе.</p>
+    <table class="kv">
+      <tr><th>Мотив · что говорит гость</th><th>Что предлагаем</th></tr>
+      <tr><td>Спорт и белок · «после тренировки», «белок», «рельеф»</td><td>Боулы, белковый омлет, Матча протеин, Смузи Protein Boost, Протеиновый чизкейк</td></tr>
+      <tr><td>Контроль веса · «что-то лёгкое», «сколько калорий»</td><td>Матча тоник, фреш-роллы, детокс-фреши, десерты на стевии</td></tr>
+      <tr><td>Ограничения · «мне нельзя…», «без глютена / лактозы / сахара»</td><td>Точно по составу, с проверкой в боте. Никаких «кажется»</td></tr>
+      <tr><td>Красота и эстетика · «что у вас красивое?», фото</td><td>Матча-напитки, десерты, смузи, Матча Рафаэло</td></tr>
+      <tr><td>Энергия и продуктивность · ноутбук, деловая встреча</td><td>Матча латте, Протеиновый латте, сытный сэндвич</td></tr>
+      <tr><td>Порадовать себя · «хочу чего-то вкусного»</td><td>Десертные напитки, Арахисовый Банофи, Тирамису — и новость, что всё без сахара</td></tr>
+    </table>
+    <div class="q">Психотип подсказывает, КАК говорить. Мотив подсказывает, ЧТО предложить.</div>
+    <p><b>Игра (8 мин).</b> Тренер-гость произносит фразу. Первая команда, хлопнувшая в ладоши, называет мотив и <b>2 позиции из меню</b>.
+    Верный мотив — 1 балл, каждая подходящая позиция — ещё 1 балл.</p>
+    <div class="list">
+      <div class="it"><span>«Я только из зала, умираю с голоду»</span><span class="tag b">спорт и белок</span></div>
+      <div class="it"><span>«Мне что-нибудь лёгкое, я на ужин иду»</span><span class="tag b">контроль веса</span></div>
+      <div class="it"><span>«Мне нельзя молочное, что из напитков есть?»</span><span class="tag b">ограничения</span></div>
+      <div class="it"><span>«Ой, а что у вас самое фотогеничное?»</span><span class="tag b">эстетика</span></div>
+      <div class="it"><span>«У меня созвон через 10 минут, надо взбодриться»</span><span class="tag b">энергия</span></div>
+      <div class="it"><span>«Была тяжёлая неделя, хочу себя побаловать»</span><span class="tag b">порадовать себя</span></div>
+      <div class="it"><span>«Я считаю калории, сколько в этом десерте?»</span><span class="tag b">контроль веса + аналитик</span></div>
+      <div class="it"><span>«У меня целиакия, что мне можно?»</span><span class="tag r">ограничения: уточнить у кухни</span></div>
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="bh"><h3>Ситуация визита · «Подойти или не мешать?»</h3><span class="t">0:42–0:50</span></div>
+    <p>Тренер зачитывает ситуацию. Команды за 30 секунд записывают: <b>когда подойти</b> и <b>что сказать</b>. 1 балл за ответ, совпавший с ориентиром.</p>
+    <table class="kv">
+      <tr><th>Ситуация</th><th>Ориентир</th></tr>
+      <tr><td>Утро, гость на бегу</td><td>Скорость и порядок. Напиток + что-то с собой: «Печенье с финиками к матче — на вечер?»</td></tr>
+      <tr><td>Деловая встреча</td><td>Не прерывать разговор. Подходить в паузе, говорить кратко и тихо</td></tr>
+      <tr><td>Подруги</td><td>Эмоции и красота. Предложить разделить десерт, попробовать новинки</td></tr>
+      <tr><td>Мама с ребёнком</td><td>Помочь с местом, предложить воду. Для ребёнка — Чиа-пудинг, сладкая вафля, напитки без кофеина</td></tr>
+      <tr><td>Свидание</td><td>Деликатно, без лишних подходов. Предложить десерт «на двоих»</td></tr>
+      <tr><td>Гость с ноутбуком уже час</td><td>Не торопить. В удобный момент предложить второй напиток или перекус</td></tr>
+    </table>
+    <div class="q">Сервис — это чувствовать момент: когда подойти, а когда не мешать.</div>
+  </div>
+
+  <div class="block">
+    <div class="bh"><h3>Перерыв</h3><span class="t">0:50–0:55</span></div>
+    <p>Тренер раскладывает карточки «Гость-загадка» по стопкам для троек.</p>
+  </div>
+
+  <div class="block">
+    <div class="bh"><h3>Постоянный гость · «Картотека смены»</h3><span class="t">0:55–1:05</span></div>
+    <p>Постоянный гость приходит не только за едой, а за ощущением, что его здесь <b>знают</b>.</p>
+    <ul>
+      <li>Запоминаем имя и любимый заказ: «Вам как обычно — Матча латте на овсяном?»</li>
+      <li>Предлагаем новинку первыми: «У нас новая позиция — хотите попробовать первым?»</li>
+      <li>Замечаем изменения: «Давно вас не было, рады видеть!»</li>
+      <li>Передаём коллегам, кто постоянный гость и что он любит.</li>
+    </ul>
+    <div class="list">
+      <div class="it"><span>Обслуживать постоянного гостя как незнакомца: «Что будете?»</span><span class="tag r">так не делаем</span></div>
+      <div class="it"><span>«Добрый день, Анна! Вам на овсяном, как обычно?»</span><span class="tag g">так делаем</span></div>
+    </div>
+    <p><b>Упражнение (6 мин).</b> Каждый за 2 минуты записывает 2–3 постоянных гостей: имя или примета, любимый заказ, молоко, особенности
+    (аллергия, «всегда спешит», «любит новинки»). Затем по кругу каждый называет одного. Коллеги дополняют, что знают о нём.
+    Итоговый список тренер передаёт управляющему — это общая «картотека смены» для передачи на пересменке.</p>
+    <p class="note">Записываем только то, что гость сам рассказал или заказал. Никаких оценок внешности и личных данных сверх имени.</p>
+  </div>
+
+  <div class="block">
+    <div class="bh"><h3>Практика · ролевки «Гость-загадка»</h3><span class="t">1:05–1:22</span></div>
+    <p><b>Тройки:</b> гость, сотрудник, наблюдатель. Гость тянет карточку (стр. 7): на ней <b>тип + мотив + ситуация</b>. Карточку не показывает —
+    играет её поведением и словами. 3 раунда по 4 минуты + 1 минута обратной связи, затем роли меняются по кругу.</p>
+    <p><b>Задача сотрудника:</b> за первые 10 секунд считать сигналы, подобрать манеру разговора под тип и позиции под мотив.
+    В конце раунда сотрудник называет вслух, какой тип и мотив он увидел, и гость открывает карточку.</p>
+    <p><b>Наблюдатель</b> отмечает в чек-листе (стр. 8): верно ли определён тип; верно ли определён мотив; подходила ли манера разговора;
+    подходили ли позиции; учтена ли ситуация.</p>
+    <p><b>Распределение по ролям:</b> кассир играет у кассы (5–10 секунд на рекомендацию), официант — у стола, бармен — при уточнении молока
+    и подаче напитка.</p>
+    <p><b>Обратная связь</b> по формуле: «Что было точно + один сигнал, который ты пропустил».</p>
+    <p class="note">Разбор с тренером (2 мин): какие карточки было труднее всего угадать и почему. Обычно — осторожный, его легко принять за аналитика.</p>
+  </div>
+
+  <div class="block">
+    <div class="bh"><h3>Итог</h3><span class="t">1:22–1:30</span></div>
+    <p><b>Блиц (3 мин).</b> Первая хлопнувшая команда отвечает, 1 балл:</p>
+    <ol>
+      <li>Гость смотрит на часы и просит латте с собой — какой тип? — <i>решительный</i></li>
+      <li>Сколько вариантов предлагаем осторожному гостю? — <i>не больше двух</i></li>
+      <li>Как говорить с аналитиком? — <i>фактами: состав, белок, подсластитель</i></li>
+      <li>Что подсказывает мотив? — <i>ЧТО предложить</i></li>
+      <li>Гость на деловой встрече — когда подходить? — <i>в паузе, кратко и тихо</i></li>
+    </ol>
+    <p><b>Круг (3 мин).</b> Подсчёт баллов, приз победителям. Каждый называет, какой тип ему ближе всего самому и с каким типом гостя ему
+    труднее всего — и что он будет делать иначе.</p>
+    <p><b>Домашнее задание:</b> пройти тренинг «Психотипы гостей» в боте и ответить на квиз · в следующие 3 смены замечать тип и мотив
+    каждого гостя и записать один удачный случай · узнать имена и заказ двух постоянных гостей.</p>
+  </div>
+</section>
+
+<!-- =============== СТР. 5: РАЗДАТКА =============== -->
+<section class="page">
+  <h2 class="sec" style="margin-top:0">Раздатка · карточки пантомимы «Покажи гостя»</h2>
+  <p class="note" style="margin-bottom:2mm">Показывать только поведением, без слов. Тип внизу карточки видит только показывающий.</p>
+  <div class="cards c3">
+    <div class="card"><b>Влетает с телефоном у уха, кивает на меню, постукивает картой по стойке</b><small>решительный</small></div>
+    <div class="card"><b>Смотрит на часы, сразу идёт к кассе, не смотрит на витрину</b><small>решительный</small></div>
+    <div class="card"><b>Улыбается, фотографирует витрину, зовёт подругу посмотреть</b><small>эмоциональный</small></div>
+    <div class="card"><b>Разглядывает интерьер, машет бариста, восхищённо показывает на десерт</b><small>эмоциональный</small></div>
+    <div class="card"><b>Долго стоит у витрины, отходит, возвращается, неуверенно поднимает палец</b><small>осторожный</small></div>
+    <div class="card"><b>Тихо пропускает других вперёд, смотрит в пол, теребит кошелёк</b><small>осторожный</small></div>
+    <div class="card"><b>Берёт карточку меню, внимательно читает, водит пальцем по строчкам</b><small>аналитик</small></div>
+    <div class="card"><b>Наклоняется к ценнику, щурится, что-то считает в телефоне</b><small>аналитик</small></div>
+    <div class="card"><b>Входит медленно, озирается, достаёт ноутбук, ищет розетку</b><small>осторожный · ситуация «ноутбук»</small></div>
+  </div>
+
+  <h2 class="sec">Раздатка · карточки «Гость-загадка»</h2>
+  <p class="note" style="margin-bottom:2mm">Тип · мотив · ситуация. Карточку не показываем сотруднику до конца раунда.</p>
+  <div class="cards c3">
+    <div class="card"><b>Решительный · спорт · утро на бегу</b><small>«Мне что-то с белком, с собой, быстро»</small></div>
+    <div class="card"><b>Аналитик · ограничения · один</b><small>«А в этом точно нет лактозы? А подсластитель какой?»</small></div>
+    <div class="card"><b>Эмоциональный · эстетика · подруги</b><small>«Хотим что-нибудь красивое и необычное!»</small></div>
+    <div class="card"><b>Осторожный · впервые у нас</b><small>«Я не знаю… а что такое матча?»</small></div>
+    <div class="card"><b>Аналитик · контроль веса · обед</b><small>«Сколько калорий в боуле? А что легче?»</small></div>
+    <div class="card"><b>Эмоциональный · порадовать себя · свидание</b><small>«Хотим десерт, что-нибудь особенное»</small></div>
+    <div class="card"><b>Решительный · энергия · деловая встреча</b><small>«Два кофе и что-нибудь перекусить, у нас 20 минут»</small></div>
+    <div class="card"><b>Осторожный · постоянный гость</b><small>«Как в прошлый раз… не помню, что брал»</small></div>
+    <div class="card"><b>Аналитик · спорт · после тренировки</b><small>«Где больше всего белка? Сколько грамм?»</small></div>
+    <div class="card"><b>Эмоциональный · порадовать себя · один</b><small>«Тяжёлая неделя, хочу чего-то вкусного!»</small></div>
+    <div class="card"><b>Осторожный · мама с ребёнком</b><small>«А ребёнку что-нибудь можно? Только без кофе»</small></div>
+    <div class="card"><b>Решительный · ограничения · утро</b><small>«Латте без молока коровьего. С собой»</small></div>
+  </div>
+</section>
+
+<!-- =============== СТР. 6: ШПАРГАЛКА =============== -->
+<section class="page">
+  <h2 class="sec" style="margin-top:0">Шпаргалка · 4 психотипа</h2>
+  <table class="kv cheat">
+    <tr><th>Тип</th><th>Как узнать</th><th>Как говорить</th><th>Не делать</th></tr>
+    <tr><td>Решительный</td><td>Спешит, знает, чего хочет, смотрит на часы</td><td>Коротко. Одна рекомендация, одна фраза</td><td>Долгих рассказов, лишних вопросов</td></tr>
+    <tr><td>Эмоциональный</td><td>Улыбается, фотографирует, спрашивает про необычное</td><td>С эмоцией, про вкус и вид</td><td>Сухих цифр, безразличного тона</td></tr>
+    <tr><td>Осторожный</td><td>Тихо, долго выбирает, «как обычно»</td><td>Мягко, не торопя. Максимум 2 варианта</td><td>Давления, «ну что, решили?»</td></tr>
+    <tr><td>Аналитик</td><td>Читает состав, спрашивает КБЖУ и подсластитель</td><td>Цифрами и составом</td><td>«Очень вкусно» без фактов, угадывать</td></tr>
+  </table>
+  <p class="note">Сигналы первых 10 секунд: темп · речь · вопросы · взгляд · компания.</p>
+
+  <h2 class="sec">Чек-лист наблюдателя «Гость-загадка»</h2>
+  <table class="sheet">
+    <tr><th>Что отмечаем</th><th style="width:22mm">Раунд 1</th><th style="width:22mm">Раунд 2</th><th style="width:22mm">Раунд 3</th></tr>
+    <tr><td>1. Поздоровался за 10 секунд, посмотрел на гостя</td><td></td><td></td><td></td></tr>
+    <tr><td>2. Верно определил психотип</td><td></td><td></td><td></td></tr>
+    <tr><td>3. Верно определил мотив</td><td></td><td></td><td></td></tr>
+    <tr><td>4. Манера разговора подошла типу</td><td></td><td></td><td></td></tr>
+    <tr><td>5. Позиции подошли мотиву (1–2 позиции)</td><td></td><td></td><td></td></tr>
+    <tr><td>6. Учёл ситуацию: спешка, компания, ребёнок</td><td></td><td></td><td></td></tr>
+    <tr><td>7. Уточнил ограничения и молоко</td><td></td><td></td><td></td></tr>
+  </table>
+  <div class="foot">Обратная связь: что было точно + один сигнал, который пропустил</div>
+</section>
+
+</body>
+</html>
